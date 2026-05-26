@@ -147,6 +147,8 @@ export const getServerSideProps = async (ctx: any) => {
     .select("*")
     .order("created_at");
 
+  console.log("SSR members:", members);
+
   return {
     props: {
       user: auth.user,
