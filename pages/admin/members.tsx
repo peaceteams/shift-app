@@ -26,12 +26,12 @@ export default function Members({ user, initialMembers }: MembersProps) {
   const [search, setSearch] = useState("");
 
   // ★ Realtime 購読
+  // ★ Realtime 購読（完全版）
   useEffect(() => {
-    console.log("🟦 Realtime Debug: useEffect START");
+    console.log("🔌 Realtime: useEffect START");
 
-    // チャンネル作成
     const channel = supabase
-      .channel("profiles-realtime-debug")
+      .channel("profiles-realtime")
       .on(
         "postgres_changes",
         {
@@ -40,25 +40,41 @@ export default function Members({ user, initialMembers }: MembersProps) {
           table: "profiles",
         },
         (payload) => {
-          console.log("🟩 EVENT RECEIVED");
-          console.log("🟩 eventType:", payload.eventType);
-          console.log("🟩 payload.new:", payload.new);
-          console.log("🟩 payload.old:", payload.old);
+          console.log("📡 EVENT:", payload.eventType);
+          console.log("📡 NEW:", payload.new);
+          console.log("📡 OLD:", payload.old);
+
+          const newRow = payload.new as Member | null;
+          const oldRow = payload.old as Member | null;
+
+          setMembers((prev) => {
+            switch (payload.eventType) {
+              case "INSERT":
+                console.log("➕ INSERT DETECTED");
+                return [...prev, newRow!];
+
+              case "UPDATE":
+                console.log("✏ UPDATE DETECTED");
+                return prev.map((m) =>
+                  m.id === newRow!.id ? newRow! : m
+                );
+
+              case "DELETE":
+                console.log("🗑 DELETE DETECTED");
+                return prev.filter((m) => m.id !== oldRow!.id);
+
+              default:
+                return prev;
+            }
+          });
         }
       )
       .subscribe((status) => {
-        console.log("🟨 SUBSCRIBE STATUS:", status);
+        console.log("🔌 SUBSCRIBE STATUS:", status);
       });
 
-    console.log("🟦 Realtime Debug: channel created:", channel);
-
-    // チャンネル内部状態を 1 秒後に確認
-    setTimeout(() => {
-      console.log("🟧 Channel state after 1s:", channel);
-    }, 1000);
-
     return () => {
-      console.log("🟥 Realtime Debug: removing channel");
+      console.log("🔌 Removing channel");
       supabase.removeChannel(channel);
     };
   }, []);
