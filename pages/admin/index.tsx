@@ -1,4 +1,3 @@
-import { GetServerSideProps } from "next";
 import { requireAdmin } from "@/lib/auth/adminAuth";
 
 type AdminProps = {

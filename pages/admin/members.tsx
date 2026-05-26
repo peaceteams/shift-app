@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/adminAuth";
 import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 
 type Member = {
   id: string;
@@ -135,12 +136,21 @@ export const getServerSideProps = async (ctx: any) => {
     };
   }
 
-  const { data: members } = await supabase.from("profiles").select("*");
+  // ★ SSR 用 Supabase クライアント（ブラウザ用を使ってはダメ）
+  const supabaseServer = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data: members } = await supabaseServer
+    .from("profiles")
+    .select("*")
+    .order("created_at");
 
   return {
     props: {
       user: auth.user,
-      initialMembers: members,
+      initialMembers: members ?? [],
     },
   };
 };
