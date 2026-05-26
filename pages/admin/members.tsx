@@ -1,9 +1,7 @@
-import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/adminAuth";
 
-// ★ メンバー型を定義
 type Member = {
   id: string;
   name: string;
@@ -20,28 +18,26 @@ export default function Members({ user, initialMembers }: MembersProps) {
   const [name, setName] = useState("");
   const [discordId, setDiscordId] = useState("");
 
-  // ★ Supabase クライアント（フロント用）
+  // ★ 検索クエリ
+  const [search, setSearch] = useState("");
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // ★ 初回ロード + Realtime 購読
+  // ★ Realtime 購読
   useEffect(() => {
-    // Realtime チャンネル
     const channel = supabase
-      .channel("members-realtime")
+      .channel("profiles-realtime")
       .on(
         "postgres_changes",
         {
-          event: "*", // INSERT / UPDATE / DELETE 全部
+          event: "*",
           schema: "public",
-          table: "profiles", // ← メンバーを profiles に入れてるのでここ
+          table: "profiles",
         },
-        (payload) => {
-          console.log("Realtime event:", payload);
-
-          // 最新データを再取得
+        () => {
           refreshMembers();
         }
       )
@@ -52,7 +48,6 @@ export default function Members({ user, initialMembers }: MembersProps) {
     };
   }, []);
 
-  // ★ 最新メンバー一覧を取得
   async function refreshMembers() {
     const { data } = await supabase.from("profiles").select("*").order("created_at");
     if (data) setMembers(data);
@@ -78,15 +73,36 @@ export default function Members({ user, initialMembers }: MembersProps) {
       return;
     }
 
-    // ★ Realtime があるので setMembers は不要
+    // Realtime が更新してくれるので setMembers は不要
     setName("");
     setDiscordId("");
   }
+
+  // ★ フィルタリング（検索）
+  const filteredMembers = useMemo(() => {
+    const q = search.toLowerCase();
+
+    return members.filter((m) => {
+      return (
+        m.id.toLowerCase().includes(q) ||
+        m.name.toLowerCase().includes(q) ||
+        (m.discord_id ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [search, members]);
 
   return (
     <div style={{ padding: 20 }}>
       <h1>メンバー管理</h1>
       <p>ログイン中: {user.email}</p>
+
+      <h2>検索</h2>
+      <input
+        placeholder="UID / 名前 / Discord ID で検索"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ width: "300px", marginBottom: "20px" }}
+      />
 
       <h2>新規メンバー追加</h2>
       <input
@@ -103,10 +119,9 @@ export default function Members({ user, initialMembers }: MembersProps) {
 
       <h2 style={{ marginTop: 30 }}>メンバー一覧</h2>
       <ul>
-        {members.map((m: Member) => (
+        {filteredMembers.map((m: Member) => (
           <li key={m.id}>
-            {m.name}（Discord: {m.discord_id ?? "未登録"}）  
-            <br />
+            <strong>{m.name}</strong>（Discord: {m.discord_id ?? "未登録"}）<br />
             UID: {m.id}
           </li>
         ))}
@@ -115,7 +130,7 @@ export default function Members({ user, initialMembers }: MembersProps) {
   );
 }
 
-// ★ SSR 認証 + メンバー一覧取得
+// SSR
 export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
 
