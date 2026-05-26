@@ -275,28 +275,42 @@ export const getServerSideProps = async (ctx: any) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // profiles と shift_requests を JOIN
-  const { data, error } = await supabaseServer
+  // ① 全メンバー取得
+  const { data: profiles, error: profilesError } = await supabaseServer
     .from("profiles")
-    .select("id, name, discord_id, shift_requests(id)")
+    .select("id, name, discord_id")
     .order("created_at");
 
-  if (error) {
-    console.error("profiles fetch error:", error.message);
+  if (profilesError) {
+    console.error("profiles fetch error:", profilesError.message);
   }
 
-  const members = (data ?? []).map((m: any) => ({
+  // ② shift_requests から「提出済みユーザーの user_id 一覧」を取得
+  const { data: requests, error: requestsError } = await supabaseServer
+    .from("shift_requests")
+    .select("user_id");
+
+  if (requestsError) {
+    console.error("shift_requests fetch error:", requestsError.message);
+  }
+
+  // 提出済みユーザーの ID セット
+  const submittedSet = new Set<string>(
+    (requests ?? []).map((r: any) => r.user_id)
+  );
+
+  // ③ マージ：shift_requests に存在しないユーザーは未提出
+  const members = (profiles ?? []).map((m: any) => ({
     id: m.id,
     name: m.name,
     discord_id: m.discord_id,
-    // shift_requests に1件でもあれば「提出済み」
-    submitted: Array.isArray(m.shift_requests) && m.shift_requests.length > 0,
+    submitted: submittedSet.has(m.id), // ← ここがポイント
   }));
 
   return {
     props: {
-    user: auth.user,
-    initialMembers: members,
+      user: auth.user,
+      initialMembers: members,
     },
   };
 };
