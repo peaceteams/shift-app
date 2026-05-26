@@ -177,8 +177,9 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               <br />UID: {m.id}
 
               {/* シフト提出状況 */}
-              <br /><span style={{ marginLeft: 10 }}>
-                {m.submitted ? "☑ シフト提出済み" : "☐ シフト未提出"}
+              <br />
+              <span>
+                {m.submitted ? "シフト提出済み ☑" : "シフト未提出 ☐"}
               </span>
 
               <div style={{ marginTop: 5 }}>
