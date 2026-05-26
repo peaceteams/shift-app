@@ -1,19 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function AdminLogin() {
-  // ★ createClient() をコンポーネント内で実行する
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }
-  );
+  // ★ useMemo で1回だけ作る
+  const supabase = useMemo(() => {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+      }
+    );
+  }, []);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
