@@ -173,11 +173,11 @@ export default function AdminDashboard({ user, initialMembers }: any) {
           {filteredMembers.map((m) => (
             <li key={m.id} style={{ marginBottom: 15 }}>
               <strong>{m.name}</strong>
-              <hr />Discord: {m.discord_id ?? "未登録"}）  
-              <hr />UID: {m.id}
+              <br />Discord: {m.discord_id ?? "未登録"}）  
+              <br />UID: {m.id}
 
               {/* シフト提出状況 */}
-              <hr /><span style={{ marginLeft: 10 }}>
+              <br /><span style={{ marginLeft: 10 }}>
                 {m.submitted ? "☑ 提出済み" : "☐ 未提出"}
               </span>
 
