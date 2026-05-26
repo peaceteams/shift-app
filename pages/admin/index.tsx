@@ -44,7 +44,10 @@ export default function AdminDashboard({ user }: AdminProps) {
 export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
 
-  if (!auth.ok) return auth.redirect;
+  if (!auth.ok) {return {
+      redirect: auth.redirect, // ← これが正しい
+    };
+  }
 
   return {
     props: {

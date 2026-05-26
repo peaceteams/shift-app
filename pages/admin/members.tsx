@@ -65,7 +65,10 @@ export default function Members({ user, initialMembers }: MembersProps) {
 export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
 
-  if (!auth.ok) return auth.redirect;
+  if (!auth.ok) {return {
+      redirect: auth.redirect, // ← これが正しい
+    };
+  }
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
