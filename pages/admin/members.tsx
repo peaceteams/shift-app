@@ -27,8 +27,20 @@ export default function Members({ user, initialMembers }: MembersProps) {
       body: JSON.stringify({ name, discord_id: discordId }),
     });
 
-    const json = await res.json();
-    setMembers([...members, json.member as Member]);
+    let json: any = null;
+    try {
+      json = await res.json();
+    } catch {
+      console.error("JSON parse error");
+    }
+
+    if (!res.ok) {
+      console.error("メンバー追加エラー:", json?.error ?? res.statusText);
+      alert("メンバー追加に失敗しました");
+      return;
+    }
+
+    setMembers([...members, json.member]);
   }
 
   return (
