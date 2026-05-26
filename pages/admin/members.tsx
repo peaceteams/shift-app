@@ -36,8 +36,31 @@ export default function Members({ user, initialMembers }: MembersProps) {
           schema: "public",
           table: "profiles",
         },
-        () => {
-          refreshMembers();
+        (payload) => {
+          console.log("Realtime event:", payload);
+
+          // DELETE
+          if (payload.eventType === "DELETE") {
+            const oldMember = payload.old as Member;
+            setMembers((prev) => prev.filter((m) => m.id !== oldMember.id));
+            return;
+          }
+
+          // UPDATE
+          if (payload.eventType === "UPDATE") {
+            const newMember = payload.new as Member;
+            setMembers((prev) =>
+              prev.map((m) => (m.id === newMember.id ? newMember : m))
+            );
+            return;
+          }
+
+          // INSERT
+          if (payload.eventType === "INSERT") {
+            const newMember = payload.new as Member;
+            setMembers((prev) => [...prev, newMember]);
+            return;
+          }
         }
       )
       .subscribe();
@@ -46,11 +69,6 @@ export default function Members({ user, initialMembers }: MembersProps) {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  async function refreshMembers() {
-    const { data } = await supabase.from("profiles").select("*").order("created_at");
-    if (data) setMembers(data);
-  }
 
   async function addMember() {
     const res = await fetch("/api/members/add", {
