@@ -2,16 +2,13 @@ import { createClient } from "@supabase/supabase-js";
 import { useState, useMemo } from "react";
 
 export default function AdminLogin() {
-  // ★ useMemo で1回だけ作る
   const supabase = useMemo(() => {
     return createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
+          persistSession: false, // ★ Cookie を使わない
         },
       }
     );
@@ -29,17 +26,24 @@ export default function AdminLogin() {
       password,
     });
 
-    console.log("▶ Supabase からの返り値:", { data, error });
+    console.log("▶ Supabase 返り値:", data, error);
 
     if (error) {
-      console.log("▶ ログインエラー:", error);
-      setError("ログインに失敗しました");
+      setError("ログイン失敗");
       return;
     }
 
-    console.log("▶ ログイン成功！Cookie:", document.cookie);
+    // ★ API に token を送る
+    await fetch("/api/set-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      }),
+    });
 
-    // window.location.href = "/admin";
+    window.location.href = "/admin";
   }
 
   return (
@@ -48,6 +52,7 @@ export default function AdminLogin() {
       <input value={email} onChange={(e) => setEmail(e.target.value)} />
       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <button onClick={login}>ログイン</button>
+      {error && <p>{error}</p>}
     </div>
   );
 }
