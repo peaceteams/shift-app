@@ -1,5 +1,5 @@
 import { GetServerSideProps } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/auth/adminAuth";
 
 type AdminProps = {
   user: {
@@ -41,34 +41,14 @@ export default function AdminDashboard({ user }: AdminProps) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const accessToken = ctx.req.cookies["sb-access-token"];
+export const getServerSideProps = async (ctx: any) => {
+  const auth = await requireAdmin(ctx);
 
-  if (!accessToken) {
-    return {
-      redirect: { destination: "/admin/login", permanent: false },
-    };
-  }
-
-  const userRes = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      },
-    }
-  );
-
-  const user = await userRes.json();
-
-  if (!user || user.error) {
-    return {
-      redirect: { destination: "/admin/login", permanent: false },
-    };
-  }
+  if (!auth.ok) return auth.redirect;
 
   return {
-    props: { user },
+    props: {
+      user: auth.user,
+    },
   };
 };
