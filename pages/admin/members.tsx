@@ -131,23 +131,19 @@ export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
 
   if (!auth.ok) {
-    return {
-      redirect: auth.redirect,
-    };
+    return { redirect: auth.redirect };
   }
 
-  // ★ SSR 用 Supabase クライアント（ブラウザ用を使ってはダメ）
+  // ★ SSR では service_role を使う（RLS 無視）
   const supabaseServer = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
   const { data: members } = await supabaseServer
     .from("profiles")
     .select("*")
     .order("created_at");
-
-  console.log("SSR members:", members);
 
   return {
     props: {
