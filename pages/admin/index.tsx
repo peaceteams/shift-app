@@ -179,7 +179,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               {/* シフト提出状況 */}
               <br />
               <span>
-                {m.submitted ? "シフト提出済み ☑" : "シフト未提出 ☐"}
+                {m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}
               </span>
 
               <div style={{ marginTop: 5 }}>
