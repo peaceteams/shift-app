@@ -1,6 +1,6 @@
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { requireAdmin } from "@/lib/auth/adminAuth";
 
 // ★ メンバー型を定義
@@ -19,6 +19,44 @@ export default function Members({ user, initialMembers }: MembersProps) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [name, setName] = useState("");
   const [discordId, setDiscordId] = useState("");
+
+  // ★ Supabase クライアント（フロント用）
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // ★ 初回ロード + Realtime 購読
+  useEffect(() => {
+    // Realtime チャンネル
+    const channel = supabase
+      .channel("members-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // INSERT / UPDATE / DELETE 全部
+          schema: "public",
+          table: "profiles", // ← メンバーを profiles に入れてるのでここ
+        },
+        (payload) => {
+          console.log("Realtime event:", payload);
+
+          // 最新データを再取得
+          refreshMembers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // ★ 最新メンバー一覧を取得
+  async function refreshMembers() {
+    const { data } = await supabase.from("profiles").select("*").order("created_at");
+    if (data) setMembers(data);
+  }
 
   async function addMember() {
     const res = await fetch("/api/members/add", {
@@ -40,7 +78,9 @@ export default function Members({ user, initialMembers }: MembersProps) {
       return;
     }
 
-    setMembers([...members, json.member]);
+    // ★ Realtime があるので setMembers は不要
+    setName("");
+    setDiscordId("");
   }
 
   return (
@@ -65,7 +105,9 @@ export default function Members({ user, initialMembers }: MembersProps) {
       <ul>
         {members.map((m: Member) => (
           <li key={m.id}>
-            {m.name}（Discord: {m.discord_id ?? "未登録"}）
+            {m.name}（Discord: {m.discord_id ?? "未登録"}）  
+            <br />
+            UID: {m.id}
           </li>
         ))}
       </ul>
@@ -77,8 +119,9 @@ export default function Members({ user, initialMembers }: MembersProps) {
 export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
 
-  if (!auth.ok) {return {
-      redirect: auth.redirect, // ← これが正しい
+  if (!auth.ok) {
+    return {
+      redirect: auth.redirect,
     };
   }
 
