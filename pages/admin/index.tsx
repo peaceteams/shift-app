@@ -6,13 +6,13 @@ export default function AdminDashboard() {
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  console.log("▶ SSR: Cookie:", ctx.req.cookies);
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      auth: {
-        persistSession: false,
-      },
+      auth: { persistSession: false },
       global: {
         headers: {
           Authorization: `Bearer ${ctx.req.cookies["sb-access-token"]}`,
@@ -21,25 +21,13 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
+  console.log("▶ SSR: getUser:", userData);
 
-  if (!user) {
+  if (!userData.user) {
+    console.log("▶ SSR: user が null → ログインページへ");
     return {
       redirect: { destination: "/admin/login", permanent: false },
-    };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.is_admin) {
-    return {
-      redirect: { destination: "/", permanent: false },
     };
   }
 
