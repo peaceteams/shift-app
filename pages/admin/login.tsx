@@ -1,19 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
 import { useState } from "react";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  }
-);
-
 export default function AdminLogin() {
+  // ★ createClient() をコンポーネント内で実行する
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    }
+  );
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,30 +35,16 @@ export default function AdminLogin() {
       return;
     }
 
-    console.log("▶ ログイン成功！Cookie が保存されているか確認:", document.cookie);
+    console.log("▶ ログイン成功！Cookie:", document.cookie);
 
     // window.location.href = "/admin";
   }
 
   return (
-    <div style={{ padding: 40 }}>
+    <div>
       <h1>管理者ログイン</h1>
-
-      <input
-        placeholder="メールアドレス"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <input
-        type="password"
-        placeholder="パスワード"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
+      <input value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       <button onClick={login}>ログイン</button>
     </div>
   );
