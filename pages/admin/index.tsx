@@ -7,18 +7,30 @@ type Member = {
   id: string;
   name: string;
   discord_id: string | null;
+  submitted?: boolean; // ← シフト提出状況
 };
 
-type AdminProps = {
-  user: {
-    id: string;
-    email: string;
-  };
-  initialMembers: Member[];
-};
-
-export default function AdminDashboard({ user, initialMembers }: AdminProps) {
+export default function AdminDashboard({ user, initialMembers }: any) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
+  // ★ 検索クエリ
+  const [search, setSearch] = useState("");
+
+  // ★ フィルタリング（検索）
+  const filteredMembers = useMemo(() => {
+    const q = search.toLowerCase();
+
+    return members.filter((m) => {
+      return (
+        m.id.toLowerCase().includes(q) ||
+        m.name.toLowerCase().includes(q) ||
+        (m.discord_id ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [search, members]);
+  // 編集モーダル用
+  const [editing, setEditing] = useState<Member | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDiscord, setEditDiscord] = useState("");
 
   // ---------------------------------------------------------
   // 🔌 Realtime: メンバー一覧をリアルタイム更新
@@ -49,37 +61,34 @@ export default function AdminDashboard({ user, initialMembers }: AdminProps) {
       )
       .subscribe();
 
-    // ★ クリーンアップは同期関数で Promise を返さないようにする
     return () => {
-      supabase.removeChannel(channel); // ← これでOK
+      supabase.removeChannel(channel);
     };
   }, []);
 
   // ---------------------------------------------------------
-  // 👤 メンバー管理 API
+  // 👤 メンバー編集（モーダル）
   // ---------------------------------------------------------
-  async function addMember(name: string, discord_id: string) {
-    await fetch("/api/members/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, discord_id }),
-    });
+  function openEditModal(member: Member) {
+    setEditing(member);
+    setEditName(member.name);
+    setEditDiscord(member.discord_id ?? "");
   }
 
-  async function updateMember(id: string, name: string, discord_id: string) {
+  async function saveEdit() {
+    if (!editing) return;
+
     await fetch("/api/members/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, name, discord_id }),
+      body: JSON.stringify({
+        id: editing.id,
+        name: editName,
+        discord_id: editDiscord,
+      }),
     });
-  }
 
-  async function deleteMember(id: string) {
-    await fetch("/api/members/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
+    setEditing(null);
   }
 
   // ---------------------------------------------------------
@@ -110,7 +119,7 @@ export default function AdminDashboard({ user, initialMembers }: AdminProps) {
   }
 
   // ---------------------------------------------------------
-  // 🧩 ワンタイムリンク管理（一括）
+  // 🧩 一括操作
   // ---------------------------------------------------------
   async function generateAll() {
     await fetch("/api/shift/generate-all", { method: "POST" });
@@ -125,55 +134,75 @@ export default function AdminDashboard({ user, initialMembers }: AdminProps) {
   }
 
   // ---------------------------------------------------------
-  // 🖥️ UI（まだ土台だけ）
+  // 🖥️ UI
   // ---------------------------------------------------------
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: 20 }}>
       <h1>管理者ダッシュボード</h1>
       <p>ログイン中: {user.email}</p>
 
+      {/* ---------------- 一括操作 ---------------- */}
+      <section style={{ marginTop: 40 }}>
+        <h2>ワンタイムリンク一括操作</h2>
+
+        <button onClick={generateAll} style={{ marginRight: 10 }}>
+          全員生成 / 再生成
+        </button>
+
+        <button onClick={deleteAll} style={{ marginRight: 10 }}>
+          全員削除
+        </button>
+
+        <button onClick={sendAll}>全員にDM送信</button>
+      </section>
+
+      {/* ----------------- 検索 ------------------- */}
+      <h2>検索</h2>
+      <input
+        placeholder="UID / 名前 / Discord ID で検索"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{ width: "300px", marginBottom: "20px" }}
+      />
+
       {/* ---------------- メンバー一覧 ---------------- */}
-      <section style={{ marginTop: "40px" }}>
-        <h2>メンバー一覧（Realtime）</h2>
+      <section style={{ marginTop: 40 }}>
+        <h2>メンバー一覧（Realtime + 提出状況）</h2>
 
         <ul>
-          {members.map((m) => (
-            <li key={m.id} style={{ marginBottom: "15px" }}>
-              <strong>{m.name}</strong>（Discord: {m.discord_id ?? "未登録"}）<br />
-              UID: {m.id}
+          {filteredMembers.map((m) => (
+            <li key={m.id} style={{ marginBottom: 15 }}>
+              <strong>{m.name}</strong>
+              （Discord: {m.discord_id ?? "未登録"}）  
+              / UID: {m.id}
 
-              <div style={{ marginTop: "5px" }}>
-                <button onClick={() => updateMember(m.id, m.name, m.discord_id ?? "")}>
-                  編集
-                </button>
+              {/* シフト提出状況 */}
+              <span style={{ marginLeft: 10 }}>
+                {m.submitted ? "☑ 提出済み" : "☐ 未提出"}
+              </span>
 
-                <button
-                  onClick={() => deleteMember(m.id)}
-                  style={{ marginLeft: "10px", color: "red" }}
-                >
-                  削除
-                </button>
-
-                {/* ワンタイムリンク管理 */}
-                <button
-                  onClick={() => generateLink(m.id)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  生成 / 再生成
-                </button>
+              <div style={{ marginTop: 5 }}>
+                <button onClick={() => openEditModal(m)}>編集</button>
 
                 <button
                   onClick={() => deleteLink(m.id)}
-                  style={{ marginLeft: "10px" }}
+                  style={{ marginLeft: 10 }}
                 >
-                  削除
+                  ワンタイムリンク削除
+                </button>
+
+                <button
+                  onClick={() => generateLink(m.id)}
+                  style={{ marginLeft: 10 }}
+                >
+                  ワンタイムリンク生成 / 再生成
                 </button>
 
                 <button
                   onClick={() => sendLink(m.id)}
-                  style={{ marginLeft: "10px" }}
+                  style={{ marginLeft: 10 }}
                 >
-                  DM送信
+                  DMにワンタイムリンクを送信
                 </button>
               </div>
             </li>
@@ -181,26 +210,61 @@ export default function AdminDashboard({ user, initialMembers }: AdminProps) {
         </ul>
       </section>
 
-      {/* ---------------- 一括操作 ---------------- */}
-      <section style={{ marginTop: "40px" }}>
-        <h2>ワンタイムリンク一括操作</h2>
+      {/* ---------------- 編集モーダル ---------------- */}
+      {editing && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: 20,
+              borderRadius: 8,
+              width: 300,
+            }}
+          >
+            <h3>編集</h3>
 
-        <button onClick={generateAll} style={{ marginRight: "10px" }}>
-          全員生成 / 再生成
-        </button>
+            <input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="名前"
+              style={{ width: "100%", marginBottom: 10 }}
+            />
 
-        <button onClick={deleteAll} style={{ marginRight: "10px" }}>
-          全員削除
-        </button>
+            <input
+              value={editDiscord}
+              onChange={(e) => setEditDiscord(e.target.value)}
+              placeholder="Discord ID"
+              style={{ width: "100%", marginBottom: 10 }}
+            />
 
-        <button onClick={sendAll}>全員にDM送信</button>
-      </section>
+            <button onClick={saveEdit}>保存</button>
+            <button
+              onClick={() => setEditing(null)}
+              style={{ marginLeft: 10 }}
+            >
+              キャンセル
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------
-// 🔐 SSR: 管理者チェック + メンバー一覧取得
+// 🔐 SSR: メンバー一覧 + シフト提出状況を取得
 // ---------------------------------------------------------
 export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
@@ -211,10 +275,18 @@ export const getServerSideProps = async (ctx: any) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { data: members } = await supabaseServer
+  // profiles + shift_submissions を JOIN
+  const { data } = await supabaseServer
     .from("profiles")
-    .select("*")
+    .select("*, shift_submissions(submitted)")
     .order("created_at");
+
+  const members = data?.map((m: any) => ({
+    id: m.id,
+    name: m.name,
+    discord_id: m.discord_id,
+    submitted: m.shift_submissions?.[0]?.submitted ?? false,
+  }));
 
   return {
     props: {
