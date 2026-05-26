@@ -7,10 +7,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // ★ サービスロールキーを使う（RLS 無視できる）
-  const supabase = createClient(
+  // ① 認証チェック用（anon key）
+  const supabaseAuth = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!, // ← これ！
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // ② DB操作用（service role key）
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
@@ -19,16 +25,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: "Not authenticated" });
   }
 
-  // 認証ユーザーを取得
-  const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+  // 認証ユーザー取得（anon key）
+  const { data: userData, error: userError } = await supabaseAuth.auth.getUser(accessToken);
+
   if (userError || !userData?.user) {
     return res.status(401).json({ error: "Invalid user" });
   }
 
   const user = userData.user;
 
-  // 管理者チェック（RLS 無視されるので確実に読める）
-  const { data: profile } = await supabase
+  // 管理者チェック（service role → RLS 無視）
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("is_admin")
     .eq("id", user.id)
@@ -40,7 +47,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { name, discord_id } = req.body;
 
-  const { data: inserted, error: insertError } = await supabase
+  // メンバー追加（service role → RLS 無視）
+  const { data: inserted, error: insertError } = await supabaseAdmin
     .from("profiles")
     .insert({
       name,
