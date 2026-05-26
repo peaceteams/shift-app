@@ -1,6 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/adminAuth";
+import { supabase } from "@/lib/supabase/client";
 
 type Member = {
   id: string;
@@ -20,11 +20,6 @@ export default function Members({ user, initialMembers }: MembersProps) {
 
   // ★ 検索クエリ
   const [search, setSearch] = useState("");
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   // ★ Realtime 購読
   useEffect(() => {
@@ -139,11 +134,6 @@ export const getServerSideProps = async (ctx: any) => {
       redirect: auth.redirect,
     };
   }
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const { data: members } = await supabase.from("profiles").select("*");
 
