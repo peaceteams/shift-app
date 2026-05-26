@@ -10,6 +10,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: {
+        persistSession: false,
+      },
       global: {
         headers: {
           Authorization: `Bearer ${ctx.req.cookies["sb-access-token"]}`,
@@ -18,7 +21,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     }
   );
 
-  // ユーザー取得
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -29,7 +31,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     };
   }
 
-  // 管理者チェック
   const { data: profile } = await supabase
     .from("profiles")
     .select("is_admin")

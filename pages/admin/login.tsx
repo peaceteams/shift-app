@@ -1,12 +1,19 @@
-import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useState } from "react";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      persistSession: true,   // ← これが超重要
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  }
+);
 
 export default function AdminLogin() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,28 +29,17 @@ export default function AdminLogin() {
       return;
     }
 
-    // ログイン成功 → 管理者ページへ
     window.location.href = "/admin";
   }
 
   return (
-    <div style={{ padding: "40px", maxWidth: "400px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
-        管理者ログイン
-      </h1>
+    <div style={{ padding: 40 }}>
+      <h1>管理者ログイン</h1>
 
       <input
-        type="email"
         placeholder="メールアドレス"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "10px",
-          marginBottom: "10px",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-        }}
       />
 
       <input
@@ -51,33 +47,11 @@ export default function AdminLogin() {
         placeholder="パスワード"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "10px",
-          marginBottom: "20px",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-        }}
       />
 
-      {error && (
-        <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>
-      )}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <button
-        onClick={login}
-        style={{
-          width: "100%",
-          padding: "12px",
-          backgroundColor: "#2563eb",
-          color: "white",
-          borderRadius: "4px",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        ログイン
-      </button>
+      <button onClick={login}>ログイン</button>
     </div>
   );
 }
