@@ -25,7 +25,6 @@ export default function Members({ user, initialMembers }: MembersProps) {
   // ★ 検索クエリ
   const [search, setSearch] = useState("");
 
-  // ★ Realtime 購読
   // ★ Realtime 購読（完全版）
   useEffect(() => {
     console.log("🔌 Realtime: useEffect START");
