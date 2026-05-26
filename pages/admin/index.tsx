@@ -177,9 +177,9 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               / UID: {m.id}
 
               {/* シフト提出状況 */}
-              <span style={{ marginLeft: 10 }}>
+              {/* <span style={{ marginLeft: 10 }}>
                 {m.submitted ? "☑ 提出済み" : "☐ 未提出"}
-              </span>
+              </span> */}
 
               <div style={{ marginTop: 5 }}>
                 <button onClick={() => openEditModal(m)}>編集</button>
@@ -275,23 +275,28 @@ export const getServerSideProps = async (ctx: any) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // profiles + shift_submissions を JOIN
-  const { data } = await supabaseServer
+  // profiles と shift_requests を JOIN
+  const { data, error } = await supabaseServer
     .from("profiles")
-    .select("*, shift_submissions(submitted)")
+    .select("id, name, discord_id, shift_requests(id)")
     .order("created_at");
 
-  const members = data?.map((m: any) => ({
+  if (error) {
+    console.error("profiles fetch error:", error.message);
+  }
+
+  const members = (data ?? []).map((m: any) => ({
     id: m.id,
     name: m.name,
     discord_id: m.discord_id,
-    submitted: m.shift_submissions?.[0]?.submitted ?? false,
+    // shift_requests に1件でもあれば「提出済み」
+    submitted: Array.isArray(m.shift_requests) && m.shift_requests.length > 0,
   }));
 
   return {
     props: {
-      user: auth.user,
-      initialMembers: members ?? [],
+    user: auth.user,
+    initialMembers: members,
     },
   };
 };
