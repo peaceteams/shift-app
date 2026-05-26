@@ -39,61 +39,21 @@ export default function Members({ user, initialMembers }: MembersProps) {
           table: "profiles",
         },
         (payload) => {
-          console.log("📡 Realtime EVENT RECEIVED:", payload);
-          console.log("📡 eventType:", payload.eventType);
-          console.log("📡 payload.new:", payload.new);
-          console.log("📡 payload.old:", payload.old);
+          console.log("📡 EVENT:", payload.eventType);
+          console.log("📡 NEW:", payload.new);
+          console.log("📡 OLD:", payload.old);
 
-          // DELETE
-          if (payload.eventType === "DELETE") {
-            const oldMember = payload.old as Member;
-            console.log("🗑 DELETE detected. Removing:", oldMember.id);
-
-            setMembers((prev) => {
-              const updated = prev.filter((m) => m.id !== oldMember.id);
-              console.log("🗑 Updated members after DELETE:", updated);
-              return updated;
-            });
-            return;
-          }
-
-          // UPDATE
           if (payload.eventType === "UPDATE") {
-            const newMember = payload.new as Member;
-            console.log("✏ UPDATE detected. Updating:", newMember.id);
-
-            setMembers((prev) => {
-              const updated = prev.map((m) =>
-                m.id === newMember.id ? newMember : m
-              );
-              console.log("✏ Updated members after UPDATE:", updated);
-              return updated;
-            });
-            return;
-          }
-
-          // INSERT
-          if (payload.eventType === "INSERT") {
-            const newMember = payload.new as Member;
-            console.log("➕ INSERT detected. Adding:", newMember.id);
-
-            setMembers((prev) => {
-              const updated = [...prev, newMember];
-              console.log("➕ Updated members after INSERT:", updated);
-              return updated;
-            });
-            return;
+            console.log("✏ UPDATE DETECTED");
           }
         }
       )
       .subscribe((status) => {
-        console.log("🔌 Realtime SUBSCRIBE STATUS:", status);
+        console.log("🔌 SUBSCRIBE STATUS:", status);
       });
 
-    console.log("🔌 Realtime: channel created:", channel);
-
     return () => {
-      console.log("🔌 Realtime: removing channel");
+      console.log("🔌 Removing channel");
       supabase.removeChannel(channel);
     };
   }, []);
