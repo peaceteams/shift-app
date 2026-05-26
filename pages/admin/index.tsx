@@ -1,7 +1,14 @@
 import { GetServerSideProps } from "next";
 import { createClient } from "@supabase/supabase-js";
 
-export default function AdminDashboard({ user }) {
+type AdminProps = {
+  user: {
+    id: string;
+    email: string;
+  };
+};
+
+export default function AdminDashboard({ user }: AdminProps) {
   return (
     <div style={{ padding: "20px" }}>
       <h1>管理者ダッシュボード</h1>
@@ -43,7 +50,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     };
   }
 
-  // ★ Supabase Auth API でユーザー取得
   const userRes = await fetch(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`,
     {
