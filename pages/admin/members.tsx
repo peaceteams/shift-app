@@ -27,10 +27,11 @@ export default function Members({ user, initialMembers }: MembersProps) {
 
   // ★ Realtime 購読
   useEffect(() => {
-    console.log("🔌 Realtime: useEffect START");
+    console.log("🟦 Realtime Debug: useEffect START");
 
+    // チャンネル作成
     const channel = supabase
-      .channel("profiles-realtime")
+      .channel("profiles-realtime-debug")
       .on(
         "postgres_changes",
         {
@@ -39,21 +40,25 @@ export default function Members({ user, initialMembers }: MembersProps) {
           table: "profiles",
         },
         (payload) => {
-          console.log("📡 EVENT:", payload.eventType);
-          console.log("📡 NEW:", payload.new);
-          console.log("📡 OLD:", payload.old);
-
-          if (payload.eventType === "UPDATE") {
-            console.log("✏ UPDATE DETECTED");
-          }
+          console.log("🟩 EVENT RECEIVED");
+          console.log("🟩 eventType:", payload.eventType);
+          console.log("🟩 payload.new:", payload.new);
+          console.log("🟩 payload.old:", payload.old);
         }
       )
       .subscribe((status) => {
-        console.log("🔌 SUBSCRIBE STATUS:", status);
+        console.log("🟨 SUBSCRIBE STATUS:", status);
       });
 
+    console.log("🟦 Realtime Debug: channel created:", channel);
+
+    // チャンネル内部状態を 1 秒後に確認
+    setTimeout(() => {
+      console.log("🟧 Channel state after 1s:", channel);
+    }, 1000);
+
     return () => {
-      console.log("🔌 Removing channel");
+      console.log("🟥 Realtime Debug: removing channel");
       supabase.removeChannel(channel);
     };
   }, []);
