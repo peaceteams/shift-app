@@ -36,7 +36,7 @@ export default function AdminLogin() {
 
     console.log("▶ ログイン成功！Cookie が保存されているか確認:", document.cookie);
 
-    window.location.href = "/admin";
+    // window.location.href = "/admin";
   }
 
   return (
