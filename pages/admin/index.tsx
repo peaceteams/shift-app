@@ -177,9 +177,9 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               / UID: {m.id}
 
               {/* シフト提出状況 */}
-              {/* <span style={{ marginLeft: 10 }}>
+              <span style={{ marginLeft: 10 }}>
                 {m.submitted ? "☑ 提出済み" : "☐ 未提出"}
-              </span> */}
+              </span>
 
               <div style={{ marginTop: 5 }}>
                 <button onClick={() => openEditModal(m)}>編集</button>
