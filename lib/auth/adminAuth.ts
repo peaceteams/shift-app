@@ -45,7 +45,7 @@ export async function requireAdmin(ctx: GetServerSidePropsContext) {
   if (!profile?.[0]?.is_admin) {
     return {
       ok: false,
-      redirect: { destination: "/", permanent: false },
+      redirect: { destination: "/admin/login", permanent: false },
     };
   }
 
