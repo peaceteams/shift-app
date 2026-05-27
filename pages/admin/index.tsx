@@ -15,6 +15,9 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // ★ 検索クエリ
   const [search, setSearch] = useState("");
 
+  // ワンタイムリンク
+  const [linkMap, setLinkMap] = useState<Record<string, string>>({});
+
   // ★ フィルタリング（検索）
   const filteredMembers = useMemo(() => {
     const q = search.toLowerCase();
@@ -95,11 +98,20 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // 🔗 ワンタイムリンク管理（個別）
   // ---------------------------------------------------------
   async function generateLink(user_id: string) {
-    await fetch("/api/shift/generate", {
+    const res = await fetch("/api/shift/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
     });
+
+    const json = await res.json();
+
+    if (json.url) {
+      setLinkMap((prev) => ({
+        ...prev,
+        [user_id]: json.url,
+      }));
+    }
   }
 
   async function deleteLink(user_id: string) {
@@ -175,6 +187,13 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               <strong>{m.name}</strong>
               <br />Discord: {m.discord_id ?? "未登録"}
               <br />UID: {m.id}
+              <br />
+              {linkMap[m.id] && (
+                <div style={{ color: "blue" }}>
+                  生成されたURL: 
+                  <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a>
+                </div>
+              )}
 
               {/* シフト提出状況 */}
               <br />
