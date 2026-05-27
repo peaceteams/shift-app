@@ -202,7 +202,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               <br />
               {linkMap[m.id] && (
                 <div style={{ color: "blue" }}>
-                  <p>URL: <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a></p>
+                  URL: {<a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a>}
                   <button onClick={() => navigator.clipboard.writeText(linkMap[m.id])}>コピー</button>
                 </div>
               )}
