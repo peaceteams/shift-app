@@ -261,9 +261,9 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   </button>
                 </div>
               ) : (
-                <div>URL: 未生成</div>
+                <div style={{ color: "gray" }}>URL: 未生成</div>
               )}
-              
+
               <br /><span>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</span>
 
               <div style={{ marginTop: 5 }}>
