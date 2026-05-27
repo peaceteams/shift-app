@@ -134,7 +134,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // 🧩 一括操作
   // ---------------------------------------------------------
   async function generateAll() {
-    const res = await fetch("/api/shift/generate-all", { method: "POST" });
+    const res = await fetch("/api/shift/regenerate-all", { method: "POST" });
     const json = await res.json();
 
     if (json.links) {
