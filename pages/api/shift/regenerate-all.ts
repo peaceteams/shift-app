@@ -22,13 +22,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: usersError.message });
   }
 
-  // 全員分の token を生成
-  const updates = users.map((u) => ({
-    user_id: u.id,
-    token: crypto.randomBytes(32).toString("hex"),
-    used: false,
-  }));
+  // 全員分の token + URL を生成
+  const updates = users.map((u) => {
+    const token = crypto.randomBytes(32).toString("hex");
+    return {
+      user_id: u.id,
+      token,
+      used: false,
+      url: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${token}`,
+    };
+  });
 
+  // DB に upsert
   const { error } = await supabaseAdmin
     .from("shift_links")
     .upsert(updates);
@@ -37,5 +42,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: error.message });
   }
 
-  return res.status(200).json({ ok: true });
+  // ★ 全員分の URL を返す
+  return res.status(200).json({
+    links: updates.map((u) => ({
+      user_id: u.user_id,
+      url: u.url,
+    })),
+  });
 }

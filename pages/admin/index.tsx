@@ -98,7 +98,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // 🔗 ワンタイムリンク管理（個別）
   // ---------------------------------------------------------
   async function generateLink(user_id: string) {
-    const res = await fetch("/api/shift/generate", {
+    const res = await fetch("/api/shift/regenerate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
@@ -134,9 +134,21 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // 🧩 一括操作
   // ---------------------------------------------------------
   async function generateAll() {
-    await fetch("/api/shift/generate-all", { method: "POST" });
-  }
+    const res = await fetch("/api/shift/generate-all", { method: "POST" });
+    const json = await res.json();
 
+    if (json.links) {
+      const map: Record<string, string> = {};
+      json.links.forEach((item: any) => {
+        map[item.user_id] = item.url;
+      });
+
+      setLinkMap((prev) => ({
+        ...prev,
+        ...map,
+      }));
+    }
+  }
   async function deleteAll() {
     await fetch("/api/shift/delete-all", { method: "POST" });
   }
@@ -191,6 +203,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               {linkMap[m.id] && (
                 <div style={{ color: "blue" }}>
                   <p>URL: <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a></p>
+                  <button onClick={() => navigator.clipboard.writeText(linkMap[m.id])}>コピー</button>
                 </div>
               )}
 
