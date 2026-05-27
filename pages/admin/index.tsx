@@ -38,36 +38,70 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // ---------------------------------------------------------
   // 🔌 Realtime: メンバー一覧をリアルタイム更新
   // ---------------------------------------------------------
-  useEffect(() => {
-    const channel = supabase
-      .channel("profiles-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "profiles" },
-        (payload) => {
-          const newRow = payload.new as Member | null;
-          const oldRow = payload.old as Member | null;
+  const profilesChannel = supabase
+    .channel("profiles-realtime")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "profiles" },
+      (payload: any) => {
+        const newRow = payload.new as Member | null;
+        const oldRow = payload.old as Member | null;
 
-          setMembers((prev) => {
-            switch (payload.eventType) {
-              case "INSERT":
-                return [...prev, newRow!];
-              case "UPDATE":
-                return prev.map((m) => (m.id === newRow!.id ? newRow! : m));
-              case "DELETE":
-                return prev.filter((m) => m.id !== oldRow!.id);
-              default:
-                return prev;
-            }
-          });
-        }
-      )
-      .subscribe();
+        setMembers((prev) => {
+          switch (payload.eventType) {
+            case "INSERT":
+              return newRow ? [...prev, newRow] : prev;
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+            case "UPDATE":
+              return newRow
+                ? prev.map((m) => (m.id === newRow.id ? newRow : m))
+                : prev;
+
+            case "DELETE":
+              return oldRow
+                ? prev.filter((m) => m.id !== oldRow.id)
+                : prev;
+
+            default:
+              return prev;
+          }
+        });
+      }
+    )
+    .subscribe();
+
+    const linksChannel = supabase
+    .channel("shift-links-realtime")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "shift_links" },
+      (payload: any) => {
+        const newRow = payload.new as { user_id: string; token: string } | null;
+        const oldRow = payload.old as { user_id: string; token: string } | null;
+
+        setLinkMap((prev) => {
+          switch (payload.eventType) {
+            case "INSERT":
+            case "UPDATE":
+              if (!newRow) return prev;
+              return {
+                ...prev,
+                [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
+              };
+
+            case "DELETE":
+              if (!oldRow) return prev;
+              const updated = { ...prev };
+              delete updated[oldRow.user_id];
+              return updated;
+
+            default:
+              return prev;
+          }
+        });
+      }
+    )
+    .subscribe();
 
   // ---------------------------------------------------------
   // 👤 メンバー編集（モーダル）
@@ -199,10 +233,9 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               <strong>{m.name}</strong>
               <br />Discord: {m.discord_id ?? "未登録"}
               <br />UID: {m.id}
-              <br />
               {linkMap[m.id] && (
-                <div style={{ color: "blue" }}>
-                  URL: {<a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a>}
+                <div>
+                  URL: <a href={linkMap[m.id]} style={{ color: "blue" }} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a>
                   <button onClick={() => navigator.clipboard.writeText(linkMap[m.id])}>コピー</button>
                 </div>
               )}

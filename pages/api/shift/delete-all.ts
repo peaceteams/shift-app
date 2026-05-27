@@ -12,12 +12,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
+  // 全削除
   const { error } = await supabaseAdmin
     .from("shift_links")
     .delete()
-    .neq("user_id", ""); // 全削除
+    .neq("user_id", null); // ← 全削除の正しい書き方
 
   if (error) {
+    console.error("DELETE-ALL ERROR:", error);
     return res.status(500).json({ error: error.message });
   }
 
