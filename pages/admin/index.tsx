@@ -7,21 +7,17 @@ type Member = {
   id: string;
   name: string;
   discord_id: string | null;
-  submitted?: boolean; // ← シフト提出状況
+  submitted?: boolean;
 };
 
-export default function AdminDashboard({ user, initialMembers }: any) {
+export default function AdminDashboard({ user, initialMembers, initialLinks }: any) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
-  // ★ 検索クエリ
+  const [linkMap, setLinkMap] = useState<Record<string, string>>(initialLinks);
+
   const [search, setSearch] = useState("");
 
-  // ワンタイムリンク
-  const [linkMap, setLinkMap] = useState<Record<string, string>>({});
-
-  // ★ フィルタリング（検索）
   const filteredMembers = useMemo(() => {
     const q = search.toLowerCase();
-
     return members.filter((m) => {
       return (
         m.id.toLowerCase().includes(q) ||
@@ -30,19 +26,20 @@ export default function AdminDashboard({ user, initialMembers }: any) {
       );
     });
   }, [search, members]);
-  // 編集モーダル用
+
   const [editing, setEditing] = useState<Member | null>(null);
   const [editName, setEditName] = useState("");
   const [editDiscord, setEditDiscord] = useState("");
 
   // ---------------------------------------------------------
-  // 🔌 Realtime: メンバー一覧をリアルタイム更新
+  // 🔌 Realtime: メンバー & ワンタイムリンク
   // ---------------------------------------------------------
   useEffect(() => {
     // Strict Mode 対策：初回だけ実行
-    if ((window as any).__profilesRealtimeSubscribed) return;
-    (window as any).__profilesRealtimeSubscribed = true;
+    if ((window as any).__realtimeSubscribed) return;
+    (window as any).__realtimeSubscribed = true;
 
+    // profiles
     const profilesChannel = supabase
       .channel("profiles-realtime")
       .on(
@@ -72,6 +69,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
       )
       .subscribe();
 
+    // shift_links
     const linksChannel = supabase
       .channel("shift-links-realtime")
       .on(
@@ -90,11 +88,13 @@ export default function AdminDashboard({ user, initialMembers }: any) {
                   ...prev,
                   [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
                 };
+
               case "DELETE":
                 if (!oldRow) return prev;
                 const updated = { ...prev };
                 delete updated[oldRow.user_id];
                 return updated;
+
               default:
                 return prev;
             }
@@ -110,7 +110,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   }, []);
 
   // ---------------------------------------------------------
-  // 👤 メンバー編集（モーダル）
+  // 👤 メンバー編集
   // ---------------------------------------------------------
   function openEditModal(member: Member) {
     setEditing(member);
@@ -135,23 +135,15 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   }
 
   // ---------------------------------------------------------
-  // 🔗 ワンタイムリンク管理（個別）
+  // 🔗 ワンタイムリンク管理
   // ---------------------------------------------------------
   async function generateLink(user_id: string) {
-    const res = await fetch("/api/shift/regenerate", {
+    await fetch("/api/shift/regenerate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
     });
-
-    const json = await res.json();
-
-    if (json.url) {
-      setLinkMap((prev) => ({
-        ...prev,
-        [user_id]: json.url,
-      }));
-    }
+    // Realtime が UI を更新するので何もしない
   }
 
   async function deleteLink(user_id: string) {
@@ -160,6 +152,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
     });
+    // Realtime が UI を更新するので何もしない
   }
 
   async function sendLink(user_id: string) {
@@ -174,21 +167,9 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // 🧩 一括操作
   // ---------------------------------------------------------
   async function generateAll() {
-    const res = await fetch("/api/shift/regenerate-all", { method: "POST" });
-    const json = await res.json();
-
-    if (json.links) {
-      const map: Record<string, string> = {};
-      json.links.forEach((item: any) => {
-        map[item.user_id] = item.url;
-      });
-
-      setLinkMap((prev) => ({
-        ...prev,
-        ...map,
-      }));
-    }
+    await fetch("/api/shift/regenerate-all", { method: "POST" });
   }
+
   async function deleteAll() {
     await fetch("/api/shift/delete-all", { method: "POST" });
   }
@@ -205,7 +186,6 @@ export default function AdminDashboard({ user, initialMembers }: any) {
       <h1>管理者ダッシュボード</h1>
       <p>ログイン中: {user.email}</p>
 
-      {/* ---------------- 一括操作 ---------------- */}
       <section style={{ marginTop: 40 }}>
         <h2>ワンタイムリンク一括操作</h2>
 
@@ -220,7 +200,6 @@ export default function AdminDashboard({ user, initialMembers }: any) {
         <button onClick={sendAll}>全員にDM送信</button>
       </section>
 
-      {/* ----------------- 検索 ------------------- */}
       <h2>検索</h2>
       <input
         placeholder="UID / 名前 / Discord ID で検索"
@@ -229,7 +208,6 @@ export default function AdminDashboard({ user, initialMembers }: any) {
         style={{ width: "300px", marginBottom: "20px" }}
       />
 
-      {/* ---------------- メンバー一覧 ---------------- */}
       <section style={{ marginTop: 40 }}>
         <h2>メンバー一覧（Realtime + 提出状況）</h2>
 
@@ -239,39 +217,36 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               <strong>{m.name}</strong>
               <br />Discord: {m.discord_id ?? "未登録"}
               <br />UID: {m.id}
+
               {linkMap[m.id] && (
                 <div>
-                  URL: <a href={linkMap[m.id]} style={{ color: "blue" }} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a>
-                  <button onClick={() => navigator.clipboard.writeText(linkMap[m.id])}>コピー</button>
+                  URL:{" "}
+                  <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">
+                    {linkMap[m.id]}
+                  </a>
+                  <button
+                    style={{ marginLeft: "10px" }}
+                    onClick={() => navigator.clipboard.writeText(linkMap[m.id])}
+                  >
+                    コピー
+                  </button>
                 </div>
               )}
 
-              {/* シフト提出状況 */}
-              <span>
-                {m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}
-              </span>
+              <span>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</span>
 
               <div style={{ marginTop: 5 }}>
                 <button onClick={() => openEditModal(m)}>編集</button>
 
-                <button
-                  onClick={() => deleteLink(m.id)}
-                  style={{ marginLeft: 10 }}
-                >
+                <button onClick={() => deleteLink(m.id)} style={{ marginLeft: 10 }}>
                   ワンタイムリンク削除
                 </button>
 
-                <button
-                  onClick={() => generateLink(m.id)}
-                  style={{ marginLeft: 10 }}
-                >
+                <button onClick={() => generateLink(m.id)} style={{ marginLeft: 10 }}>
                   ワンタイムリンク生成 / 再生成
                 </button>
 
-                <button
-                  onClick={() => sendLink(m.id)}
-                  style={{ marginLeft: 10 }}
-                >
+                <button onClick={() => sendLink(m.id)} style={{ marginLeft: 10 }}>
                   DMにワンタイムリンクを送信
                 </button>
               </div>
@@ -280,7 +255,6 @@ export default function AdminDashboard({ user, initialMembers }: any) {
         </ul>
       </section>
 
-      {/* ---------------- 編集モーダル ---------------- */}
       {editing && (
         <div
           style={{
@@ -320,10 +294,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
             />
 
             <button onClick={saveEdit}>保存</button>
-            <button
-              onClick={() => setEditing(null)}
-              style={{ marginLeft: 10 }}
-            >
+            <button onClick={() => setEditing(null)} style={{ marginLeft: 10 }}>
               キャンセル
             </button>
           </div>
@@ -334,7 +305,7 @@ export default function AdminDashboard({ user, initialMembers }: any) {
 }
 
 // ---------------------------------------------------------
-// 🔐 SSR: メンバー一覧 + シフト提出状況を取得
+// 🔐 SSR: メンバー一覧 + シフト提出状況 + ワンタイムリンク
 // ---------------------------------------------------------
 export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
@@ -345,42 +316,43 @@ export const getServerSideProps = async (ctx: any) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // ① 全メンバー取得
-  const { data: profiles, error: profilesError } = await supabaseServer
+  // ① profiles
+  const { data: profiles } = await supabaseServer
     .from("profiles")
     .select("id, name, discord_id")
     .order("created_at");
 
-  if (profilesError) {
-    console.error("profiles fetch error:", profilesError.message);
-  }
-
-  // ② shift_requests から「提出済みユーザーの user_id 一覧」を取得
-  const { data: requests, error: requestsError } = await supabaseServer
+  // ② shift_requests
+  const { data: requests } = await supabaseServer
     .from("shift_requests")
     .select("user_id");
 
-  if (requestsError) {
-    console.error("shift_requests fetch error:", requestsError.message);
-  }
-
-  // 提出済みユーザーの ID セット
   const submittedSet = new Set<string>(
     (requests ?? []).map((r: any) => r.user_id)
   );
 
-  // ③ マージ：shift_requests に存在しないユーザーは未提出
   const members = (profiles ?? []).map((m: any) => ({
     id: m.id,
     name: m.name,
     discord_id: m.discord_id,
-    submitted: submittedSet.has(m.id), // ← ここがポイント
+    submitted: submittedSet.has(m.id),
   }));
+
+  // ③ shift_links（← これが重要）
+  const { data: links } = await supabaseServer
+    .from("shift_links")
+    .select("user_id, token");
+
+  const linkMap: Record<string, string> = {};
+  for (const row of links ?? []) {
+    linkMap[row.user_id] = `${process.env.NEXT_PUBLIC_APP_URL}/shift/${row.token}`;
+  }
 
   return {
     props: {
       user: auth.user,
       initialMembers: members,
+      initialLinks: linkMap,
     },
   };
 };
