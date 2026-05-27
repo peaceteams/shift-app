@@ -25,11 +25,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 既存の token を上書き（再生成）
   const { data, error } = await supabaseAdmin
     .from("shift_links")
-    .update({
+    .upsert({
+      user_id,
       token,
       used: false,
     })
-    .eq("user_id", user_id)
     .select()
     .single();
 
