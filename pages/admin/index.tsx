@@ -38,70 +38,76 @@ export default function AdminDashboard({ user, initialMembers }: any) {
   // ---------------------------------------------------------
   // 🔌 Realtime: メンバー一覧をリアルタイム更新
   // ---------------------------------------------------------
-  const profilesChannel = supabase
-    .channel("profiles-realtime")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "profiles" },
-      (payload: any) => {
-        const newRow = payload.new as Member | null;
-        const oldRow = payload.old as Member | null;
+  useEffect(() => {
+    // Strict Mode 対策：初回だけ実行
+    if ((window as any).__profilesRealtimeSubscribed) return;
+    (window as any).__profilesRealtimeSubscribed = true;
 
-        setMembers((prev) => {
-          switch (payload.eventType) {
-            case "INSERT":
-              return newRow ? [...prev, newRow] : prev;
+    const profilesChannel = supabase
+      .channel("profiles-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        (payload: any) => {
+          const newRow = payload.new as Member | null;
+          const oldRow = payload.old as Member | null;
 
-            case "UPDATE":
-              return newRow
-                ? prev.map((m) => (m.id === newRow.id ? newRow : m))
-                : prev;
-
-            case "DELETE":
-              return oldRow
-                ? prev.filter((m) => m.id !== oldRow.id)
-                : prev;
-
-            default:
-              return prev;
-          }
-        });
-      }
-    )
-    .subscribe();
+          setMembers((prev) => {
+            switch (payload.eventType) {
+              case "INSERT":
+                return newRow ? [...prev, newRow] : prev;
+              case "UPDATE":
+                return newRow
+                  ? prev.map((m) => (m.id === newRow.id ? newRow : m))
+                  : prev;
+              case "DELETE":
+                return oldRow
+                  ? prev.filter((m) => m.id !== oldRow.id)
+                  : prev;
+              default:
+                return prev;
+            }
+          });
+        }
+      )
+      .subscribe();
 
     const linksChannel = supabase
-    .channel("shift-links-realtime")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "shift_links" },
-      (payload: any) => {
-        const newRow = payload.new as { user_id: string; token: string } | null;
-        const oldRow = payload.old as { user_id: string; token: string } | null;
+      .channel("shift-links-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shift_links" },
+        (payload: any) => {
+          const newRow = payload.new as { user_id: string; token: string } | null;
+          const oldRow = payload.old as { user_id: string; token: string } | null;
 
-        setLinkMap((prev) => {
-          switch (payload.eventType) {
-            case "INSERT":
-            case "UPDATE":
-              if (!newRow) return prev;
-              return {
-                ...prev,
-                [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
-              };
+          setLinkMap((prev) => {
+            switch (payload.eventType) {
+              case "INSERT":
+              case "UPDATE":
+                if (!newRow) return prev;
+                return {
+                  ...prev,
+                  [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
+                };
+              case "DELETE":
+                if (!oldRow) return prev;
+                const updated = { ...prev };
+                delete updated[oldRow.user_id];
+                return updated;
+              default:
+                return prev;
+            }
+          });
+        }
+      )
+      .subscribe();
 
-            case "DELETE":
-              if (!oldRow) return prev;
-              const updated = { ...prev };
-              delete updated[oldRow.user_id];
-              return updated;
-
-            default:
-              return prev;
-          }
-        });
-      }
-    )
-    .subscribe();
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(linksChannel);
+    };
+  }, []);
 
   // ---------------------------------------------------------
   // 👤 メンバー編集（モーダル）
