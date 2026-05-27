@@ -247,7 +247,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <br />Discord: {m.discord_id ?? "未登録"}
               <br />UID: {m.id}
 
-              {linkMap[m.id] && (
+              {linkMap[m.id] ? (
                 <div>
                   URL:{" "}
                   <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">
@@ -260,9 +260,11 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                     コピー
                   </button>
                 </div>
+              ) : (
+                <div>URL: 未生成</div>
               )}
-
-              <span>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</span>
+              
+              <br /><span>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</span>
 
               <div style={{ marginTop: 5 }}>
                 <button onClick={() => openEditModal(m)}>編集</button>
