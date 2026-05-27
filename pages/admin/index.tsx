@@ -190,13 +190,11 @@ export default function AdminDashboard({ user, initialMembers }: any) {
               <br />
               {linkMap[m.id] && (
                 <div style={{ color: "blue" }}>
-                  生成されたURL: 
-                  <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a>
+                  URL: <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">{linkMap[m.id]}</a>
                 </div>
               )}
 
               {/* シフト提出状況 */}
-              <br />
               <span>
                 {m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}
               </span>
