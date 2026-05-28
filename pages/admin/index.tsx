@@ -98,22 +98,23 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
           console.log("📡 [shift_links] Realtime 受信:", payload);
 
           const newRow = payload.new as { user_id: string; token: string } | null;
-          const oldRow = payload.old as { user_id: string; token: string } | null;
 
           setLinkMap((prev) => {
             console.log("📘 [shift_links] 更新前 linkMap:", prev);
 
             switch (payload.eventType) {
               case "INSERT":
+                console.log("📘 [shift_links] 作成 linkMap:", prev);
               case "UPDATE":
                 console.log("♻ INSERT/UPDATE:", newRow);
                 if (!newRow) return prev;
+                console.log("📘 [shift_links] 更新後 linkMap:", prev);
                 return {
                   ...prev,
                   [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
                 };
 
-              case "DELETE": {
+              case "DELETE":
                 const updated = { ...prev };
 
                 // DB から shift_links が消えた → Realtime の INSERT/UPDATE が来ない限り URL は存在しない
@@ -124,8 +125,9 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   }
                 });
 
+                console.log("📘 [shift_links] 削除後 linkMap:", prev);
+
                 return updated;
-              }
 
               default:
                 console.log("❓ 未知イベント:", payload.eventType);
