@@ -27,9 +27,13 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     });
   }, [search, members]);
 
+  //編集モーダル
   const [editing, setEditing] = useState<Member | null>(null);
   const [editName, setEditName] = useState("");
   const [editDiscord, setEditDiscord] = useState("");
+
+  //コピーボタン切り替え
+  const [copied, setCopied] = useState(false);
 
   // ---------------------------------------------------------
   // 🔌 Realtime: メンバー & ワンタイムリンク
@@ -180,7 +184,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
     });
-    // Realtime が UI を更新するので何もしない
   }
 
   async function deleteLink(user_id: string) {
@@ -189,7 +192,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
     });
-    // Realtime が UI を更新するので何もしない
   }
 
   async function sendLink(user_id: string) {
@@ -259,10 +261,14 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                 <div>
                   URL:{" "}
                   <button
-                    style={{ marginLeft: "10px" }}
-                    onClick={() => navigator.clipboard.writeText(linkMap[m.id])}
+                    className={copied ? "copy-btn copied" : "copy-btn"}
+                    onClick={() => {
+                      navigator.clipboard.writeText(linkMap[m.id]);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 3000); // 3秒後に戻す
+                    }}
                   >
-                    コピー
+                    {copied ? "Copied!" : "Copy"}
                   </button>
                 </div>
               ) : (
