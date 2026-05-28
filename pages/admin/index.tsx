@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/adminAuth";
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 
 type Member = {
@@ -357,6 +356,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 // 🔐 SSR: メンバー一覧 + シフト提出状況 + ワンタイムリンク
 // ---------------------------------------------------------
 export const getServerSideProps = async (ctx: any) => {
+  const { createClient } = await import("@supabase/supabase-js");
+
   const auth = await requireAdmin(ctx);
   if (!auth.ok) return { redirect: auth.redirect };
 
