@@ -119,7 +119,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
                 // members の UID を基準にして、存在しない URL を削除
                 members.forEach((m) => {
-                  if (updated[m.id] && payload.old?.user_id === m.id) {
+                  if (updated[m.id]) {
                     delete updated[m.id];
                   }
                 });
