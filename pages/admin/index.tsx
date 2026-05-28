@@ -113,12 +113,24 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
                 };
 
-              case "DELETE":
-                console.log("🗑 DELETE:", oldRow);
-                if (!oldRow) return prev;
-                const updated = { ...prev };
-                delete updated[oldRow.user_id];
+              case "DELETE": {
+                console.log("🗑 DELETE payload:", payload);
+
+                // 削除されたレコードの token を取得
+                const old = payload.old;
+                if (!old) return { ...prev };
+
+                const deletedUrl = `${process.env.NEXT_PUBLIC_APP_URL}/shift/${old.token}`;
+
+                // URL が一致する UID を探して削除
+                const updated = Object.fromEntries(
+                  Object.entries(prev).filter(([uid, url]) => url !== deletedUrl)
+                );
+
+                console.log("🗑 DELETE 後の linkMap:", updated);
+
                 return updated;
+              };
 
               default:
                 console.log("❓ 未知イベント:", payload.eventType);
@@ -261,7 +273,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   </button>
                 </div>
               ) : (
-                <div style={{ color: "gray" }}>URL: 未生成</div>
+                <div>URL: 未生成</div>
               )}
 
               <br /><span>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</span>
