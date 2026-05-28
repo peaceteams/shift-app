@@ -33,7 +33,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   const [editDiscord, setEditDiscord] = useState("");
 
   //コピーボタン切り替え
-  const [copied, setCopied] = useState(false);
+  const [copiedMap, setCopiedMap] = useState<{ [userId: string]: boolean }>({});
 
   // ---------------------------------------------------------
   // 🔌 Realtime: メンバー & ワンタイムリンク
@@ -258,19 +258,26 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <div>UID: {m.id}</div>
 
               {linkMap[m.id] ? (
-                <div>
-                  URL:{" "}
-                  <button
-                    className={copied ? "copy-btn copied" : "copy-btn"}
-                    onClick={() => {
-                      navigator.clipboard.writeText(linkMap[m.id]);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 3000); // 3秒後に戻す
-                    }}
-                  >
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
+                <button
+                  className={copiedMap[m.id] ? "copy-btn copied" : "copy-btn"}
+                  onClick={() => {
+                    navigator.clipboard.writeText(linkMap[m.id]);
+
+                    setCopiedMap((prev) => ({
+                      ...prev,
+                      [m.id]: true,
+                    }));
+
+                    setTimeout(() => {
+                      setCopiedMap((prev) => ({
+                        ...prev,
+                        [m.id]: false,
+                      }));
+                    }, 3000);
+                  }}
+                >
+                  {copiedMap[m.id] ? "Copied!" : "Copy"}
+                </button>
               ) : (
                 <div>URL: 未生成</div>
               )}
