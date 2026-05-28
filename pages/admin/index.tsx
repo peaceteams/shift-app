@@ -252,15 +252,12 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
           {filteredMembers.map((m) => (
             <li key={m.id} style={{ marginBottom: 15 }}>
               <strong>{m.name}</strong>
-              <br />Discord: {m.discord_id ?? "未登録"}
-              <br />UID: {m.id}
+              <div>Discord: {m.discord_id ?? "未登録"}</div>
+              <div>UID: {m.id}</div>
 
               {linkMap[m.id] ? (
                 <div>
                   URL:{" "}
-                  <a href={linkMap[m.id]} target="_blank" rel="noopener noreferrer">
-                    {linkMap[m.id]}
-                  </a>
                   <button
                     style={{ marginLeft: "10px" }}
                     onClick={() => navigator.clipboard.writeText(linkMap[m.id])}
