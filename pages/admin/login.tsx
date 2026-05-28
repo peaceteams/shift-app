@@ -19,14 +19,14 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
 
   async function login() {
-    console.log("▶ ログイン開始");
+    // console.log("▶ ログイン開始");
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    console.log("▶ Supabase 返り値:", data, error);
+    // console.log("▶ Supabase 返り値:", data, error);
 
     if (error) {
       setError("ログイン失敗");

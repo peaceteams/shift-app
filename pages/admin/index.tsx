@@ -39,7 +39,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     if ((window as any).__realtimeSubscribed) return;
     (window as any).__realtimeSubscribed = true;
 
-    console.log("🔌 Realtime 初期化開始");
+    // console.log("🔌 Realtime 初期化開始");
 
     // -----------------------------
     // profiles
@@ -50,40 +50,40 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles" },
         (payload: any) => {
-          console.log("📡 [profiles] Realtime 受信:", payload);
+          // console.log("📡 [profiles] Realtime 受信:", payload);
 
           const newRow = payload.new as Member | null;
           const oldRow = payload.old as Member | null;
 
           setMembers((prev) => {
-            console.log("📘 [profiles] 更新前 members:", prev);
+            // console.log("📘 [profiles] 更新前 members:", prev);
 
             switch (payload.eventType) {
               case "INSERT":
-                console.log("➕ INSERT:", newRow);
+                // console.log("➕ INSERT:", newRow);
                 return newRow ? [...prev, newRow] : prev;
 
               case "UPDATE":
-                console.log("♻ UPDATE:", newRow);
+                // console.log("♻ UPDATE:", newRow);
                 return newRow
                   ? prev.map((m) => (m.id === newRow.id ? newRow : m))
                   : prev;
 
               case "DELETE":
-                console.log("🗑 DELETE:", oldRow);
+                // console.log("🗑 DELETE:", oldRow);
                 return oldRow
                   ? prev.filter((m) => m.id !== oldRow.id)
                   : prev;
 
               default:
-                console.log("❓ 未知イベント:", payload.eventType);
+                // console.log("❓ 未知イベント:", payload.eventType);
                 return prev;
             }
           });
         }
       )
       .subscribe((status) => {
-        console.log("🔌 profiles-realtime subscribe 状態:", status);
+        // console.log("🔌 profiles-realtime subscribe 状態:", status);
       });
 
     // -----------------------------
@@ -95,20 +95,20 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         "postgres_changes",
         { event: "*", schema: "public", table: "shift_links" },
         (payload: any) => {
-          console.log("📡 [shift_links] Realtime 受信:", payload);
+          // console.log("📡 [shift_links] Realtime 受信:", payload);
 
           const newRow = payload.new as { user_id: string; token: string } | null;
 
           setLinkMap((prev) => {
-            console.log("📘 [shift_links] 更新前 linkMap:", prev);
+            // console.log("📘 [shift_links] 更新前 linkMap:", prev);
 
             switch (payload.eventType) {
               case "INSERT":
-                console.log("📘 [shift_links] 作成 linkMap:", prev);
+                // console.log("📘 [shift_links] 作成 linkMap:", prev);
               case "UPDATE":
                 console.log("♻ INSERT/UPDATE:", newRow);
                 if (!newRow) return prev;
-                console.log("📘 [shift_links] 更新後 linkMap:", prev);
+                // console.log("📘 [shift_links] 更新後 linkMap:", prev);
                 return {
                   ...prev,
                   [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
@@ -124,23 +124,23 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   }
                 });
 
-                console.log(updated);
+                // console.log(updated);
                 return updated;
               }
 
               default:
-                console.log("❓ 未知イベント:", payload.eventType);
+                // console.log("❓ 未知イベント:", payload.eventType);
                 return prev;
             }
           });
         }
       )
       .subscribe((status) => {
-        console.log("🔌 shift-links-realtime subscribe 状態:", status);
+        // console.log("🔌 shift-links-realtime subscribe 状態:", status);
       });
 
     return () => {
-      console.log("🔌 Realtime チャンネル解除");
+      // console.log("🔌 Realtime チャンネル解除");
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(linksChannel);
     };

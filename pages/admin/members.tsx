@@ -27,7 +27,7 @@ export default function Members({ user, initialMembers }: MembersProps) {
 
   // ★ Realtime 購読（完全版）
   useEffect(() => {
-    console.log("🔌 Realtime: useEffect START");
+    // console.log("🔌 Realtime: useEffect START");
 
     const channel = supabase
       .channel("profiles-realtime")
@@ -39,9 +39,9 @@ export default function Members({ user, initialMembers }: MembersProps) {
           table: "profiles",
         },
         (payload) => {
-          console.log("📡 EVENT:", payload.eventType);
-          console.log("📡 NEW:", payload.new);
-          console.log("📡 OLD:", payload.old);
+          // console.log("📡 EVENT:", payload.eventType);
+          // console.log("📡 NEW:", payload.new);
+          // console.log("📡 OLD:", payload.old);
 
           const newRow = payload.new as Member | null;
           const oldRow = payload.old as Member | null;
@@ -49,17 +49,17 @@ export default function Members({ user, initialMembers }: MembersProps) {
           setMembers((prev) => {
             switch (payload.eventType) {
               case "INSERT":
-                console.log("➕ INSERT DETECTED");
+                // console.log("➕ INSERT DETECTED");
                 return [...prev, newRow!];
 
               case "UPDATE":
-                console.log("✏ UPDATE DETECTED");
+                // console.log("✏ UPDATE DETECTED");
                 return prev.map((m) =>
                   m.id === newRow!.id ? newRow! : m
                 );
 
               case "DELETE":
-                console.log("🗑 DELETE DETECTED");
+                // console.log("🗑 DELETE DETECTED");
                 return prev.filter((m) => m.id !== oldRow!.id);
 
               default:
@@ -69,11 +69,11 @@ export default function Members({ user, initialMembers }: MembersProps) {
         }
       )
       .subscribe((status) => {
-        console.log("🔌 SUBSCRIBE STATUS:", status);
+        // console.log("🔌 SUBSCRIBE STATUS:", status);
       });
 
     return () => {
-      console.log("🔌 Removing channel");
+      // console.log("🔌 Removing channel");
       supabase.removeChannel(channel);
     };
   }, []);
@@ -89,11 +89,11 @@ export default function Members({ user, initialMembers }: MembersProps) {
     try {
       json = await res.json();
     } catch {
-      console.error("JSON parse error");
+      // console.error("JSON parse error");
     }
 
     if (!res.ok) {
-      console.error("メンバー追加エラー:", json?.error ?? res.statusText);
+      // console.error("メンバー追加エラー:", json?.error ?? res.statusText);
       alert("メンバー追加に失敗しました");
       return;
     }
