@@ -114,23 +114,18 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                 };
 
               case "DELETE": {
-                console.log("🗑 DELETE payload:", payload);
+                const updated = { ...prev };
 
-                // 削除されたレコードの token を取得
-                const old = payload.old;
-                if (!old) return { ...prev };
-
-                const deletedUrl = `${process.env.NEXT_PUBLIC_APP_URL}/shift/${old.token}`;
-
-                // URL が一致する UID を探して削除
-                const updated = Object.fromEntries(
-                  Object.entries(prev).filter(([uid, url]) => url !== deletedUrl)
-                );
-
-                console.log("🗑 DELETE 後の linkMap:", updated);
+                // DB から shift_links が消えた → Realtime の INSERT/UPDATE が来ない限り URL は存在しない
+                // よって payload を信用せず、members を基準に削除する
+                members.forEach((m) => {
+                  if (updated[m.id] && payload.old?.user_id === m.id) {
+                    delete updated[m.id];
+                  }
+                });
 
                 return updated;
-              };
+              }
 
               default:
                 console.log("❓ 未知イベント:", payload.eventType);
