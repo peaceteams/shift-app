@@ -258,26 +258,27 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <div>UID: {m.id}</div>
 
               {linkMap[m.id] ? (
-                <button
-                  className={copiedMap[m.id] ? "copy-btn copied" : "copy-btn"}
-                  onClick={() => {
-                    navigator.clipboard.writeText(linkMap[m.id]);
-
-                    setCopiedMap((prev) => ({
-                      ...prev,
-                      [m.id]: true,
-                    }));
-
-                    setTimeout(() => {
+                <div>
+                  URL:
+                  <button
+                    className={copiedMap[m.id] ? "copy-btn copied" : "copy-btn"}
+                    onClick={() => {
+                      navigator.clipboard.writeText(linkMap[m.id]);
                       setCopiedMap((prev) => ({
                         ...prev,
-                        [m.id]: false,
+                        [m.id]: true,
                       }));
-                    }, 3000);
-                  }}
-                >
-                  {copiedMap[m.id] ? "Copied!" : "Copy"}
-                </button>
+                      setTimeout(() => {
+                        setCopiedMap((prev) => ({
+                          ...prev,
+                          [m.id]: false,
+                        }));
+                      }, 3000);
+                    }}
+                  >
+                    {copiedMap[m.id] ? "Copied!" : "Copy"}
+                  </button>
+                </div>
               ) : (
                 <div>URL: 未生成</div>
               )}
