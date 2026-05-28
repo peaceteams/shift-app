@@ -106,7 +106,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               case "INSERT":
                 // console.log("📘 [shift_links] 作成 linkMap:", prev);
               case "UPDATE":
-                console.log("♻ INSERT/UPDATE:", newRow);
+                // console.log("♻ INSERT/UPDATE:", newRow);
                 if (!newRow) return prev;
                 // console.log("📘 [shift_links] 更新後 linkMap:", prev);
                 return {
@@ -272,7 +272,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                 <div>URL: 未生成</div>
               )}
 
-              <br /><span>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</span>
+              <div>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</div>
 
               <div style={{ marginTop: 5 }}>
                 <button onClick={() => openEditModal(m)}>編集</button>
