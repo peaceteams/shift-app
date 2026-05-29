@@ -42,14 +42,14 @@
   }
   20% {
     opacity: 1;
-    transform: translate(-50%, -4px);
+    transform: translate(-50%, 0);
   }
   80% {
     opacity: 1;
-    transform: translate(-50%, -6px);
+    transform: translate(-50%, 0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -10px);
+    transform: translate(-50%, 0);
   }
 }
