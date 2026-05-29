@@ -128,7 +128,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   }
                 });
 
-                // console.log(updated);
+                console.log(updated);
                 return updated;
               }
 
