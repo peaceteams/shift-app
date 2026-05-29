@@ -267,7 +267,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                       setTimeout(() => setShowBubble(false), 1500); // 1.5秒で消える
                     }}
                   >
-                    URL:{linkMap[m.id]}
+                    URL: {linkMap[m.id]}
                   </span>
 
                   {showBubble && <span className="copy-bubble">Copied!</span>}
