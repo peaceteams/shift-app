@@ -33,7 +33,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   const [editDiscord, setEditDiscord] = useState("");
 
   //コピー吹き出し
-  const [bubbleMap, setBubbleMap] = useState<{ [id: string]: boolean }>({});
+  const [bubbleMap, setBubbleMap] = useState<{ [id: string]: "show" | "hide" | null }>({});
 
   // ---------------------------------------------------------
   // 🔌 Realtime: メンバー & ワンタイムリンク
@@ -265,16 +265,28 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                     onClick={() => {
                       navigator.clipboard.writeText(linkMap[m.id]);
 
-                      setBubbleMap((prev) => ({ ...prev, [m.id]: true }));
+                      // フェードイン
+                      setBubbleMap((prev) => ({ ...prev, [m.id]: "show" }));
+
+                      // 1.2秒後にフェードアウト
                       setTimeout(() => {
-                        setBubbleMap((prev) => ({ ...prev, [m.id]: false }));
+                        setBubbleMap((prev) => ({ ...prev, [m.id]: "hide" }));
+                      }, 1200);
+
+                      // 完全に消す（DOMから消す）
+                      setTimeout(() => {
+                        setBubbleMap((prev) => ({ ...prev, [m.id]: null }));
                       }, 1500);
                     }}
                   >
                     {linkMap[m.id]}
                   </span>
 
-                  {bubbleMap[m.id] && <span className="copy-bubble">Copied!</span>}
+                  {bubbleMap[m.id] && (
+                    <span className={`copy-bubble ${bubbleMap[m.id]}`}>
+                      Copied!
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div>URL: 未生成</div>

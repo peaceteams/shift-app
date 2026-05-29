@@ -9,6 +9,30 @@
   color: #0070f3;
 }
 
+/* フェードイン（上に動く） */
+@keyframes bubbleFadeIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px); /* 下から出てくる */
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0); /* 元の位置 */
+  }
+}
+
+/* フェードアウト（下に動く） */
+@keyframes bubbleFadeOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 6px); /* 下に戻って消える */
+  }
+}
+
 .copy-bubble {
   position: absolute;
   top: -32px;
@@ -20,8 +44,7 @@
   border-radius: 6px;
   font-size: 12px;
   white-space: nowrap;
-  opacity: 0;
-  animation: bubbleFade 1.5s ease forwards;
+  pointer-events: none;
 }
 
 .copy-bubble::after {
@@ -35,21 +58,12 @@
   border-color: #333 transparent transparent transparent;
 }
 
-@keyframes bubbleFade {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 0);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, 0);
-  }
+/* 表示中のアニメーション */
+.copy-bubble.show {
+  animation: bubbleFadeIn 0.2s ease forwards;
+}
+
+/* 消えるときのアニメーション */
+.copy-bubble.hide {
+  animation: bubbleFadeOut 0.3s ease forwards;
 }
