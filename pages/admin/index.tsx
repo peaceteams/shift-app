@@ -257,40 +257,37 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <div>Discord: {m.discord_id ?? "未登録"}</div>
               <div>UID: {m.id}</div>
 
-              {linkMap[m.id] ? (
-                <div className="url-wrapper">
-                  <span>URL: </span>
-                  <span
-                    className="url-text"
-                    onClick={() => {
-                      navigator.clipboard.writeText(linkMap[m.id]);
+            {linkMap[m.id] ? (
+              <div className="url-wrapper">
+                <span>URL: </span>
+                <span
+                  className="url-text"
+                  onClick={() => {
+                    navigator.clipboard.writeText(linkMap[m.id]);
 
-                      // フェードイン
-                      setBubbleMap((prev) => ({ ...prev, [m.id]: "show" }));
+                    setBubbleMap((prev) => ({ ...prev, [m.id]: "show" }));
 
-                      // 1.2秒後にフェードアウト
-                      setTimeout(() => {
-                        setBubbleMap((prev) => ({ ...prev, [m.id]: "hide" }));
-                      }, 1200);
+                    setTimeout(() => {
+                      setBubbleMap((prev) => ({ ...prev, [m.id]: "hide" }));
+                    }, 1200);
 
-                      // 完全に消す（DOMから消す）
-                      setTimeout(() => {
-                        setBubbleMap((prev) => ({ ...prev, [m.id]: null }));
-                      }, 1500);
-                    }}
-                  >
-                    {linkMap[m.id]}
+                    setTimeout(() => {
+                      setBubbleMap((prev) => ({ ...prev, [m.id]: null }));
+                    }, 1500);
+                  }}
+                >
+                  {linkMap[m.id]}
+                </span>
+
+                {bubbleMap[m.id] && (
+                  <span className={`copy-bubble ${bubbleMap[m.id]}`}>
+                    Copied!
                   </span>
-
-                  {bubbleMap[m.id] && (
-                    <span className={`copy-bubble ${bubbleMap[m.id]}`}>
-                      Copied!
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="url-wrapper">URL: 未生成</div>
-              )}
+                )}
+              </div>
+            ) : (
+              <div className="url-wrapper">URL: 未生成</div>
+            )}
 
               <div>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</div>
 
