@@ -187,6 +187,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }
 
   async function deleteLink(user_id: string) {
+    console.log(user_id);
     await fetch("/api/shift/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
