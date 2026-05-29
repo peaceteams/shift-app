@@ -259,7 +259,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
               {linkMap[m.id] ? (
                 <div className="url-wrapper">
-                  URL: 
+                  <span>URL: </span>
                   <span
                     className="url-text"
                     onClick={() => {
