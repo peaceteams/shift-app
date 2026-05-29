@@ -32,8 +32,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   const [editName, setEditName] = useState("");
   const [editDiscord, setEditDiscord] = useState("");
 
-  //コピーボタン切り替え
-  const [copiedMap, setCopiedMap] = useState<{ [userId: string]: boolean }>({});
+  //コピー吹き出し
+  const [showBubble, setShowBubble] = useState(false);
 
   // ---------------------------------------------------------
   // 🔌 Realtime: メンバー & ワンタイムリンク
@@ -258,26 +258,19 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <div>UID: {m.id}</div>
 
               {linkMap[m.id] ? (
-                <div>
-                  URL:
-                  <button
-                    className={copiedMap[m.id] ? "copy-btn copied" : "copy-btn"}
+                <div className="url-wrapper">
+                  <span
+                    className="url-text"
                     onClick={() => {
-                      navigator.clipboard.writeText(linkMap[m.id]);
-                      setCopiedMap((prev) => ({
-                        ...prev,
-                        [m.id]: true,
-                      }));
-                      setTimeout(() => {
-                        setCopiedMap((prev) => ({
-                          ...prev,
-                          [m.id]: false,
-                        }));
-                      }, 3000);
+                      navigator.clipboard.writeText(linkMap[m.id]); // URLコピー
+                      setShowBubble(true);
+                      setTimeout(() => setShowBubble(false), 1500); // 1.5秒で消える
                     }}
                   >
-                    {copiedMap[m.id] ? "Copied!" : "Copy"}
-                  </button>
+                    {linkMap[m.id]}
+                  </span>
+
+                  {showBubble && <span className="copy-bubble">Copied!</span>}
                 </div>
               ) : (
                 <div>URL: 未生成</div>
