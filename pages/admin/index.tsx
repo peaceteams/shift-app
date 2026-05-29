@@ -289,7 +289,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   )}
                 </div>
               ) : (
-                <div>URL: 未生成</div>
+                <div className="url-wrapper">URL: 未生成</div>
               )}
 
               <div>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</div>
