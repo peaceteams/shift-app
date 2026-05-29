@@ -120,12 +120,15 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
               case "DELETE": {
                 const updated = { ...prev };
-                const oldRow = payload.old;
 
-                if (oldRow?.user_id) {
-                  delete updated[oldRow.user_id];
-                }
+                // members の UID を基準にして、存在しない URL を削除
+                members.forEach((m) => {
+                  if (updated[m.id]) {
+                    delete updated[m.id];
+                  }
+                });
 
+                console.log(updated);
                 return updated;
               }
 
