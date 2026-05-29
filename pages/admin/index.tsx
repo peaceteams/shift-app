@@ -259,6 +259,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
               {linkMap[m.id] ? (
                 <div className="url-wrapper">
+                  URL: 
                   <span
                     className="url-text"
                     onClick={() => {
@@ -270,7 +271,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                       }, 1500);
                     }}
                   >
-                    URL: {linkMap[m.id]}
+                    {linkMap[m.id]}
                   </span>
 
                   {bubbleMap[m.id] && <span className="copy-bubble">Copied!</span>}
