@@ -118,20 +118,34 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
                 };
 
-              case "DELETE": {
-                const oldToken = payload.old.token;
+              case "DELETE":
+                setLinkMap((prev) => {
+                  const oldToken = payload.old?.token;
 
-                // token → user_id を逆引き
-                const userId = Object.keys(prev).find(
-                  (uid) => prev[uid]?.includes(oldToken)
-                );
+                  // token が無ければ prev を返す（undefined は返さない）
+                  if (!oldToken) {
+                    return prev;
+                  }
 
-                if (!userId) return prev;
+                  // token → user_id の逆引き
+                  const userId = Object.keys(prev).find((uid) =>
+                    prev[uid]?.includes(oldToken)
+                  );
 
-                const updated = { ...prev };
-                delete updated[userId];
-                return updated;
-              }
+                  // userId が見つからなければ prev を返す
+                  if (!userId) {
+                    return prev;
+                  }
+
+                  // ここまで来たら確実に更新
+                  const updated = { ...prev };
+                  delete updated[userId];
+                  return updated;
+                });
+              
+              default:
+                // console.log("❓ 未知イベント:", payload.eventType);
+                return prev;
             }
           });
         }
