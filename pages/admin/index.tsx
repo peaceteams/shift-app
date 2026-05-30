@@ -316,26 +316,49 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
           メンバー追加
         </button>
 
-        {adding && (
-          <div style={{ marginBottom: "20px", padding: "10px", border: "1px solid #ccc" }}>
-            <h3>メンバー追加</h3>
+        {editing && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                background: "white",
+                padding: 20,
+                borderRadius: 8,
+                width: 300,
+              }}
+            >
+              <h3>メンバー追加</h3>
 
-            <input
-              value={addName}
-              onChange={(e) => setAddName(e.target.value)}
-              placeholder="名前"
-            />
+              <input
+                value={addName}
+                onChange={(e) => setAddName(e.target.value)}
+                placeholder="名前"
+                style={{ width: "100%", marginBottom: 10 }}
+              />
 
-            <input
-              value={addDiscord}
-              onChange={(e) => setAddDiscord(e.target.value)}
-              placeholder="Discord ID"
-            />
+              <input
+                value={addDiscord}
+                onChange={(e) => setAddDiscord(e.target.value)}
+                placeholder="Discord ID（任意）"
+                style={{ width: "100%", marginBottom: 10 }}
+              />
 
-            <button onClick={addMember}>追加</button>
-            <button onClick={closeAddModal} style={{ marginLeft: "10px" }}>
-              キャンセル
-            </button>
+              <button onClick={addMember}>追加</button>
+              <button onClick={() => setAdding(false)} style={{ marginLeft: 10 }}>
+                キャンセル
+              </button>
+            </div>
           </div>
         )}
       </section>
