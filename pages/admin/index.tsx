@@ -304,6 +304,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
         <button onClick={sendAll}>全員にDM送信</button>
 
+        <button onClick={openAddModal} style={{ marginLeft: 10 }}>
+          メンバー追加
+        </button>
+
         {showAddModal && (
           <div className="modal">
             <h3>メンバー追加</h3>
