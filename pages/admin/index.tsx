@@ -120,6 +120,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
               case "DELETE":
                 setLinkMap((prev) => {
+                  console.log("DELETE 開始")
                   const oldToken = payload.old?.token;
 
                   // token が無ければ prev を返す（undefined は返さない）
@@ -131,6 +132,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   const userId = Object.keys(prev).find((uid) =>
                     prev[uid]?.includes(oldToken)
                   );
+
+                  console.log(userId);
 
                   // userId が見つからなければ prev を返す
                   if (!userId) {
