@@ -1,58 +1,62 @@
-import { createClient } from "@supabase/supabase-js";
-import { useState, useMemo } from "react";
+"use client";
+
+import { useState } from "react";
 
 export default function AdminLogin() {
-  const supabase = useMemo(() => {
-    return createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        auth: {
-          persistSession: false, // ★ Cookie を使わない
-        },
-      }
-    );
-  }, []);
-
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function login() {
-    // console.log("▶ ログイン開始");
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    // console.log("▶ Supabase 返り値:", data, error);
-
-    if (error) {
-      setError("ログイン失敗");
-      return;
-    }
-
-    // ★ API に token を送る
-    await fetch("/api/set-session", {
+    const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      }),
+      body: JSON.stringify({ password }),
     });
 
-    window.location.href = "/admin";
+    const data = await res.json();
+    setLoading(false);
+
+    if (data.ok) {
+      window.location.href = "/admin/dashboard";
+    } else {
+      setMessage(data.error);
+    }
   }
 
   return (
-    <div>
-      <h1>管理者ログイン</h1>
-      <input value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={login}>ログイン</button>
-      {error && <p>{error}</p>}
+    <div style={{ maxWidth: 400, margin: "40px auto" }}>
+      <h2>管理者ログイン</h2>
+
+      <form onSubmit={handleLogin}>
+        <input
+          type="password"
+          placeholder="パスワード"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{ width: "100%", margin: "8px 0", padding: "8px" }}
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "10px",
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading ? "ログイン中…" : "ログイン"}
+        </button>
+      </form>
+
+      {message && <p style={{ marginTop: 10 }}>{message}</p>}
     </div>
   );
 }
