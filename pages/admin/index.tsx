@@ -121,9 +121,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               case "DELETE": {
                 const updated = { ...prev };
                 const oldRow = payload.old;
+                console.log(oldRow);
 
                 if (oldRow?.user_id) {
-                  delete updated[oldRow.user_id];  // ← この1行だけでOK
+                  delete updated[oldRow.user_id];
                 }
 
                 return updated;
@@ -184,7 +185,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }
 
   async function deleteLink(user_id: string) {
-    console.log(user_id);
     await fetch("/api/shift/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
