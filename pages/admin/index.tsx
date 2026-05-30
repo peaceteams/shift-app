@@ -125,6 +125,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                 members.forEach((m) => {
                   if (updated[m.id]) {
                     delete updated[m.id];
+                    console.log(updated);
                   }
                 });
 
