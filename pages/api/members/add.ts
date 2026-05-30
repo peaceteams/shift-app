@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log("▶ API /members/add START");
+  const token = req.cookies["admin_session"];
 
   try {
     if (req.method !== "POST") {
@@ -26,13 +27,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    console.log("▶ Step3: Read cookie");
-    const accessToken = req.cookies["sb-access-token"];
-    console.log("accessToken exists:", !!accessToken);
+    // セッション確認
+    const { data: session } = await supabaseAdmin
+      .from("admin_sessions")
+      .select("admin_id")
+      .eq("token", token)
+      .maybeSingle();
 
-    if (!accessToken) {
-      console.log("❌ No access token");
-      return res.status(401).json({ error: "Not authenticated" });
+    if (!session) {
+      console.log("❌ admin_sessions に該当セッションなし");
+      return res.status(401).json({ error: "Invalid session" });
     }
 
     console.log("▶ Step4: Auth getUser()");
