@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 
 type Member = {
   id: string;
+  user_id: string;
   name: string;
   discord_id: string | null;
   submitted?: boolean;
@@ -340,9 +341,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         <ul>
           {filteredMembers.map((m) => (
             <li key={m.id} style={{ marginBottom: 15 }}>
+              <strong>UID: {m.id}</strong>
               <strong>{m.name}</strong>
+              <div>ユーザーID: {m.user_id}</div>
               <div>Discord: {m.discord_id ?? "未登録"}</div>
-              <div>UID: {m.id}</div>
 
             {linkMap[m.id] ? (
               <div className="url-wrapper">
@@ -528,7 +530,7 @@ export const getServerSideProps = async (ctx: any) => {
   // ① profiles
   const { data: profiles } = await supabaseServer
     .from("profiles")
-    .select("id, name, discord_id")
+    .select("id, name, user_id, password_hash, discord_id")
     .order("created_at");
 
   // ② shift_requests
@@ -542,6 +544,7 @@ export const getServerSideProps = async (ctx: any) => {
 
   const members = (profiles ?? []).map((m: any) => ({
     id: m.id,
+    user_id: m.user_id,
     name: m.name,
     discord_id: m.discord_id,
     submitted: submittedSet.has(m.id),
