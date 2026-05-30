@@ -29,6 +29,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
   //追加モーダル
   const [adding, setAdding] = useState(false);
+  const [addUserId, setAddUserId] = useState("");
+  const [addPassword, setAddPassword] = useState("");
   const [addName, setAddName] = useState("");
   const [addDiscord, setAddDiscord] = useState("");
   
@@ -169,42 +171,49 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   // ---------------------------------------------------------
   // 👤メンバー追加
   // ---------------------------------------------------------
-    function openAddModal() {
-      setAdding(true);
-      setAddName("");
-      setAddDiscord("");
+  function openAddModal() {
+    setAdding(true);
+    setAddName("");
+    setAddDiscord("");
+  }
+
+  function closeAddModal() {
+    setAdding(false);
+    setAddName("");
+    setAddDiscord("");
+  }
+
+  async function addMember() {
+    const res = await fetch("/api/members/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: addName,
+        discord_id: addDiscord,
+        userId: addUserId,
+        password: addPassword,
+      }),
+    });
+
+    let json: any = null;
+
+    try {
+      json = await res.json();
+    } catch {
+      // JSON parse error
     }
 
-    function closeAddModal() {
-      setAdding(false);
-      setAddName("");
-      setAddDiscord("");
+    if (!res.ok) {
+      alert("メンバー追加に失敗しました");
+      return;
     }
 
-    async function addMember() {
-      const res = await fetch("/api/members/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, discord_id: addDiscord }),
-      });
-
-      let json: any = null;
-      try {
-        json = await res.json();
-      } catch {
-        // console.error("JSON parse error");
-      }
-
-      if (!res.ok) {
-        // console.error("メンバー追加エラー:", json?.error ?? res.statusText);
-        alert("メンバー追加に失敗しました");
-        return;
-      }
-
-      // Realtime が更新してくれるので setMembers は不要
-      setAddName("");
-      setAddDiscord("");
-    }
+    // 成功処理
+    setAddUserId("");
+    setAddPassword("");
+    setAddName("");
+    setAddDiscord("");
+  }
   
   // ---------------------------------------------------------
   // 👤 メンバー削除
@@ -422,6 +431,20 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               value={addName}
               onChange={(e) => setAddName(e.target.value)}
               placeholder="名前"
+              style={{ width: "100%", marginBottom: 10 }}
+            />
+
+            <input
+              value={addUserId}
+              onChange={(e) => setAddUserId(e.target.value)}
+              placeholder="ユーザーID（番号）"
+              style={{ width: "100%", marginBottom: 10 }}
+            />
+
+            <input
+              value={addPassword}
+              onChange={(e) => setAddPassword(e.target.value)}
+              placeholder="パスワード"
               style={{ width: "100%", marginBottom: 10 }}
             />
 
