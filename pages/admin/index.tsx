@@ -27,6 +27,11 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     });
   }, [search, members]);
 
+  //追加モーダル
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDiscord, setNewDiscord] = useState("");
+
   //編集モーダル
   const [editing, setEditing] = useState<Member | null>(null);
   const [editName, setEditName] = useState("");
@@ -120,7 +125,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
               case "DELETE":
                 setLinkMap((prev) => {
-                  console.log("DELETE 開始")
                   const oldToken = payload.old?.token;
 
                   // token が無ければ prev を返す（undefined は返さない）
@@ -132,8 +136,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
                   const userId = Object.keys(prev).find((uid) =>
                     prev[uid]?.includes(oldToken)
                   );
-
-                  console.log(userId);
 
                   // userId が見つからなければ prev を返す
                   if (!userId) {
@@ -163,6 +165,56 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       supabase.removeChannel(linksChannel);
     };
   }, []);
+  
+  // ---------------------------------------------------------
+  // 👤メンバー追加
+  // ---------------------------------------------------------
+    function openAddModal() {
+      setShowAddModal(true);
+    }
+
+    async function addMember() {
+      const res = await fetch("/api/members/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, discord_id: newDiscord }),
+      });
+
+      let json: any = null;
+      try {
+        json = await res.json();
+      } catch {
+        // console.error("JSON parse error");
+      }
+
+      if (!res.ok) {
+        // console.error("メンバー追加エラー:", json?.error ?? res.statusText);
+        alert("メンバー追加に失敗しました");
+        return;
+      }
+
+      // Realtime が更新してくれるので setMembers は不要
+      setNewName("");
+      setNewDiscord("");
+    }
+  
+  // ---------------------------------------------------------
+  // 👤 メンバー削除
+  // ---------------------------------------------------------
+  async function deleteMember(id: string) {
+    if (!confirm("本当に削除しますか？")) return;
+
+    const res = await fetch("/api/members/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    if (!res.ok) {
+      alert("削除に失敗しました");
+      return;
+    }
+  }
 
   // ---------------------------------------------------------
   // 👤 メンバー編集
@@ -251,6 +303,29 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         </button>
 
         <button onClick={sendAll}>全員にDM送信</button>
+
+        {showAddModal && (
+          <div className="modal">
+            <h3>メンバー追加</h3>
+
+            <input
+              type="text"
+              placeholder="名前"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Discord ID（任意）"
+              value={newDiscord}
+              onChange={(e) => setNewDiscord(e.target.value)}
+            />
+
+            <button onClick={addMember}>追加</button>
+            <button onClick={() => setShowAddModal(false)}>閉じる</button>
+          </div>
+        )}
       </section>
 
       <h2>検索</h2>
@@ -318,6 +393,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
                 <button onClick={() => sendLink(m.id)} style={{ marginLeft: 10 }}>
                   DMにワンタイムリンクを送信
+                </button>
+
+                <button onClick={() => deleteMember(m.id)} style={{ marginLeft: 10, color: "red" }}>
+                  削除
                 </button>
               </div>
             </li>
@@ -408,7 +487,7 @@ export const getServerSideProps = async (ctx: any) => {
     submitted: submittedSet.has(m.id),
   }));
 
-  // ③ shift_links（← これが重要）
+  // ③ shift_links（重要）
   const { data: links } = await supabaseServer
     .from("shift_links")
     .select("user_id, token");
