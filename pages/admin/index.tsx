@@ -300,7 +300,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       <p>ログイン中: {user.email}</p>
 
       <section style={{ marginTop: 40 }}>
-        <h2>ワンタイムリンク一括操作</h2>
+        <h2>操作一覧</h2>
 
         <button onClick={generateAll} style={{ marginRight: 10 }}>
           全員生成 / 再生成
