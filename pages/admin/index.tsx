@@ -28,10 +28,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }, [search, members]);
 
   //追加モーダル
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDiscord, setNewDiscord] = useState("");
-
+  const [adding, setAdding] = useState(false);
+  const [addName, setAddName] = useState("");
+  const [addDiscord, setAddDiscord] = useState("");
+  
   //編集モーダル
   const [editing, setEditing] = useState<Member | null>(null);
   const [editName, setEditName] = useState("");
@@ -170,14 +170,22 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   // 👤メンバー追加
   // ---------------------------------------------------------
     function openAddModal() {
-      setShowAddModal(true);
+      setAdding(true);
+      setAddName("");
+      setAddDiscord("");
+    }
+
+    function closeAddModal() {
+      setAdding(false);
+      setAddName("");
+      setAddDiscord("");
     }
 
     async function addMember() {
       const res = await fetch("/api/members/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, discord_id: newDiscord }),
+        body: JSON.stringify({ name, discord_id: addDiscord }),
       });
 
       let json: any = null;
@@ -194,8 +202,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       }
 
       // Realtime が更新してくれるので setMembers は不要
-      setNewName("");
-      setNewDiscord("");
+      setAddName("");
+      setAddDiscord("");
     }
   
   // ---------------------------------------------------------
@@ -308,26 +316,26 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
           メンバー追加
         </button>
 
-        {showAddModal && (
-          <div className="modal">
+        {adding && (
+          <div style={{ marginBottom: "20px", padding: "10px", border: "1px solid #ccc" }}>
             <h3>メンバー追加</h3>
 
             <input
-              type="text"
+              value={addName}
+              onChange={(e) => setAddName(e.target.value)}
               placeholder="名前"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
             />
 
             <input
-              type="text"
-              placeholder="Discord ID（任意）"
-              value={newDiscord}
-              onChange={(e) => setNewDiscord(e.target.value)}
+              value={addDiscord}
+              onChange={(e) => setAddDiscord(e.target.value)}
+              placeholder="Discord ID"
             />
 
             <button onClick={addMember}>追加</button>
-            <button onClick={() => setShowAddModal(false)}>閉じる</button>
+            <button onClick={closeAddModal} style={{ marginLeft: "10px" }}>
+              キャンセル
+            </button>
           </div>
         )}
       </section>
