@@ -341,8 +341,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         <ul>
           {filteredMembers.map((m) => (
             <li key={m.id} style={{ marginBottom: 15 }}>
-              <strong>UID: {m.id}</strong>
               <strong>{m.name}</strong>
+              <div>UID: {m.id}</div>
               <div>ユーザーID: {m.user_id}</div>
               <div>Discord: {m.discord_id ?? "未登録"}</div>
 
