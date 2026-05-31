@@ -26,7 +26,7 @@ export default function UserLoginPage() {
     }
 
     // ログイン成功 → shift ページへ
-    Router.push("/user/my-page");
+    Router.push("/user/shift");
   }
 
   return (
