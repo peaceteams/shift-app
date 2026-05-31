@@ -8,7 +8,6 @@ type Member = {
   user_id: string;
   name: string;
   discord_id: string | null;
-  submitted?: boolean;
 };
 
 export default function AdminDashboard({ user, initialMembers, initialLinks }: any) {
@@ -37,6 +36,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   
   //編集モーダル
   const [editing, setEditing] = useState<Member | null>(null);
+  const [editUserId, setEditUserId] = useState("");
+  const [editPassword, setEditPassword] = useState("");
   const [editName, setEditName] = useState("");
   const [editDiscord, setEditDiscord] = useState("");
 
@@ -241,6 +242,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     setEditing(member);
     setEditName(member.name);
     setEditDiscord(member.discord_id ?? "");
+    setEditUserId(member.user_id);
+    setEditPassword("");
   }
 
   async function saveEdit() {
@@ -250,8 +253,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        id: editing.id,
         name: editName,
+        id: editing.id,
+        user_id: editUserId,
+        password: editPassword || null,
         discord_id: editDiscord,
       }),
     });
@@ -342,7 +347,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
           {filteredMembers.map((m) => (
             <li key={m.id} style={{ marginBottom: 15 }}>
               <strong>{m.name}</strong>
-              <div>UID: {m.id}</div>
+              <div>UUID: {m.id}</div>
               <div>ユーザーID: {m.user_id}</div>
               <div>Discord: {m.discord_id ?? "未登録"}</div>
 
@@ -377,8 +382,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
             ) : (
               <div className="url-wrapper">URL: 未生成</div>
             )}
-
-              <div>{m.submitted ? "シフト提出 ☑" : "シフト提出 ☐"}</div>
 
               <div style={{ marginTop: 5 }}>
                 <button onClick={() => openEditModal(m)}>編集</button>
@@ -465,7 +468,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         </div>
       )}
 
-      {/* 編集追加モーダル */}
+      {/* 編集モーダル */}
       {editing && (
         <div
           style={{
@@ -498,6 +501,20 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
             />
 
             <input
+              value={editUserId}
+              onChange={(e) => setEditUserId(e.target.value)}
+              placeholder="ユーザーID（番号）"
+              style={{ width: "100%", marginBottom: 10 }}
+            />
+
+            <input
+              value={editPassword}
+              onChange={(e) => setEditPassword(e.target.value)}
+              placeholder="パスワード"
+              style={{ width: "100%", marginBottom: 10 }}
+            />
+
+            <input
               value={editDiscord}
               onChange={(e) => setEditDiscord(e.target.value)}
               placeholder="Discord ID"
@@ -506,7 +523,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
             <button onClick={saveEdit}>保存</button>
             <button onClick={() => setEditing(null)} style={{ marginLeft: 10 }}>
-              キャンセル
+              閉じる
             </button>
           </div>
         </div>
@@ -533,21 +550,11 @@ export const getServerSideProps = async (ctx: any) => {
     .select("id, name, user_id, password_hash, discord_id")
     .order("created_at");
 
-  // ② shift_requests
-  const { data: requests } = await supabaseServer
-    .from("shift_requests")
-    .select("user_id");
-
-  const submittedSet = new Set<string>(
-    (requests ?? []).map((r: any) => r.user_id)
-  );
-
   const members = (profiles ?? []).map((m: any) => ({
     id: m.id,
     user_id: m.user_id,
     name: m.name,
-    discord_id: m.discord_id,
-    submitted: submittedSet.has(m.id),
+    discord_id: m.discord_id
   }));
 
   // ③ shift_links（重要）
