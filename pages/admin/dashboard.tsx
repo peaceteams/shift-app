@@ -319,7 +319,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       <section style={{ marginTop: 40 }}>
         <h2>ページ移動</h2>
 
-        <button onClick={() => router.push("./all-shift.tsx")}></button>
+        <button onClick={() => router.push("./all-shift")}></button>
       </section>
 
       <section style={{ marginTop: 40 }}>
