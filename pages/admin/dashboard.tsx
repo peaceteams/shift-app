@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/adminAuth";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
+import { useRouter } from "next/router";
 
 type Member = {
   id: string;
@@ -14,7 +15,9 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [linkMap, setLinkMap] = useState<Record<string, string>>(initialLinks);
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("")
+  
+  const router = useRouter();;
 
   const filteredMembers = useMemo(() => {
     const q = search.toLowerCase();
@@ -312,6 +315,12 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   return (
     <div style={{ padding: 20 }}>
       <h1>管理者ダッシュボード</h1>
+
+      <section style={{ marginTop: 40 }}>
+        <h2>ページ移動</h2>
+
+        <button onClick={() => router.push("./all-shift.tsx")}></button>
+      </section>
 
       <section style={{ marginTop: 40 }}>
         <h2>操作一覧</h2>

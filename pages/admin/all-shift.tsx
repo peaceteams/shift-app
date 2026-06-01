@@ -125,6 +125,25 @@ return (
                 ))}
             </tbody>
         </table>
+
+        <a
+            href="./dashboard"
+            style={{
+                position: "fixed",
+                bottom: "20px",
+                right: "20px",
+                background: "#0070f3",
+                color: "white",
+                padding: "12px 18px",
+                borderRadius: "8px",
+                textDecoration: "none",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                fontWeight: "bold",
+                zIndex: 9999,
+            }}
+        >
+            ダッシュボードへ戻る
+        </a>
     </div>
 );
 }
