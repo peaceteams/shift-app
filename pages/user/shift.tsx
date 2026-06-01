@@ -81,22 +81,38 @@ export default function ShiftSubmitPage() {
     }
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div style={{ padding: 20 }}>
+
+                <h1>シフト提出</h1>
+                
+                <div
+                    style={{
+                        fontSize: 12,
+                        color: "#aaa",
+                        height: "32px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        lineHeight: "14px",
+                    }}
+                >
+
+                <>
+                <span>–</span>
+                <span>–</span>
+                </>
+                </div>
+            </div>
+        )
     }
 
     return (
         <div style={{ padding: 20 }}>
 
         <h1>シフト提出</h1>
-
-        {(() => {
-        console.log("=== BEFORE CALENDAR RENDER ===");
-        console.log("loading:", loading);
-        console.log("shifts:", shifts);
-        console.log("selectedDate:", selectedDate);
-        return null;
-        })()}
-
+        
         <Calendar
             onClickDay={(date) => {
                 if (loading) return;
@@ -109,13 +125,11 @@ export default function ShiftSubmitPage() {
                 const key = date.toISOString().split("T")[0];
                 const shift = shifts[key];
 
-                const hasShift = !!(shift && shift.start && shift.end);
-
                 return (
                     <div
                     style={{
                         fontSize: 12,
-                        color: hasShift ? "green" : "#aaa",
+                        color: shift ? "green" : "#aaa",
                         height: "32px",
                         display: "flex",
                         flexDirection: "column",
@@ -125,12 +139,7 @@ export default function ShiftSubmitPage() {
                     }}
                     >
 
-                    {loading ? (
-                        <>
-                        <span></span>
-                        <span></span>
-                        </>
-                    ) : hasShift ? (
+                    {shift ? (
                         <>
                         <span>{shift!.start}</span>
                         <span>{shift!.end}</span>
