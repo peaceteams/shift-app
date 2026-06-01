@@ -49,36 +49,40 @@ export default function ShiftSubmitPage() {
     setEnd(shifts[key]?.end ?? "");
   }
 
-  async function saveShift() {
-    if (!selectedDate) return;
-    const key = selectedDate.toISOString().split("T")[0];
+    async function saveShift() {
+        if (!selectedDate) return;
+        const key = selectedDate.toISOString().split("T")[0];
 
-    // ローカル更新
-    setShifts((prev) => ({
-      ...prev,
-      [key]: { start, end },
-    }));
+        // ローカル更新
+        setShifts((prev) => ({
+        ...prev,
+        [key]: { start, end },
+        }));
 
-    // API 保存
-    const res = await fetch("/api/shift/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date: key,
-        start,
-        end,
-      }),
-    });
+        // API 保存
+        const res = await fetch("/api/shift/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            date: key,
+            start,
+            end,
+        }),
+        });
 
-    const json = await res.json();
+        const json = await res.json();
 
-    if (!res.ok) {
-      alert(json.error ?? "保存に失敗しました");
-      return;
+        if (!res.ok) {
+        alert(json.error ?? "保存に失敗しました");
+        return;
+        }
+
+        setSelectedDate(null);
     }
 
-    setSelectedDate(null);
-  }
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div style={{ padding: 20 }}>
@@ -99,9 +103,7 @@ export default function ShiftSubmitPage() {
                 openModal(date);
             }}
             
-            tileDisabled={() => {
-                return Boolean(loading);
-            }}
+            tileDisabled={() => loading}
             
             tileContent={({ date }) => {
                 const key = date.toISOString().split("T")[0];
