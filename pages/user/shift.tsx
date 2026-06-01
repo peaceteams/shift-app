@@ -38,7 +38,7 @@ export default function ShiftSubmitPage() {
         }));
 
           // ② API に保存
-        const res = await fetch("/api/shift/update", {
+        const res = await fetch("/api/shift/submit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
