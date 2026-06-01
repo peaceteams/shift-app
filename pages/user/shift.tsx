@@ -80,93 +80,109 @@ export default function ShiftSubmitPage() {
     setSelectedDate(null);
   }
 
-  return (
-    <div style={{ padding: 20 }}>
-      <h1>シフト提出</h1>
+    return (
+        <div style={{ padding: 20 }}>
 
-    <Calendar
-        onClickDay={(date) => {
-            if (loading) return;
-            openModal(date);
-        }}
-        tileDisabled={() => loading}
-        tileContent={({ date }) => {
-        const key = date.toISOString().split("T")[0];
-        const shift = shifts[key];
+        <h1>シフト提出</h1>
 
-        const hasShift = shift && shift.start && shift.end;
+        <Calendar
+            onClickDay={(date) => {
+                if (loading) return;
+                openModal(date);
+            }}
+            
+            tileDisabled={() => loading}
+            
+            tileContent={({ date }) => {
+                try {
+                    console.log("tileContent date:", date);
 
-        return (
+                    const key = date.toISOString().split("T")[0];
+                    console.log("key:", key);
+
+                    const shift = shifts[key];
+                    console.log("shift:", shift);
+
+                    const hasShift = shift && shift.start && shift.end;
+                    console.log("hasShift:", hasShift);
+
+                    return (
+                        <div
+                            style={{
+                            fontSize: 12,
+                            color: hasShift ? "green" : "#aaa",
+                            height: "32px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            lineHeight: "14px",
+                            }}
+                        >
+                            {loading
+                            ? ""
+                            : hasShift
+                            ? (
+                                <>
+                                    <span>{shift.start}</span>
+                                    <span>{shift.end}</span>
+                                </>
+                                )
+                            : (
+                                <>
+                                    <span>–</span>
+                                    <span>–</span>
+                                </>
+                                )}
+                        </div>
+                    );
+                } catch (e) {
+                    console.error("tileContent ERROR:", e);
+                    return <div style={{ height: "32px" }}>ERR</div>;
+                }
+            }}
+        />
+
+        {selectedDate && (
             <div
             style={{
-                fontSize: 12,
-                color: hasShift ? "green" : "#aaa",
-                height: "32px",
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                background: "rgba(0,0,0,0.5)",
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
                 justifyContent: "center",
-                lineHeight: "14px",
+                alignItems: "center",
             }}
             >
-            {loading
-                ? ""
-                : hasShift
-                ? (
-                    <>
-                    <span>{shift.start}</span>
-                    <span>{shift.end}</span>
-                    </>
-                )
-                : (
-                    <>
-                    <span>–</span>
-                    <span>–</span>
-                    </>
-                )}
+
+                <div style={{ background: "white", padding: 20, borderRadius: 8 }}>
+                    <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
+
+                    <input
+                        type="time"
+                        value={start}
+                        onChange={(e) => setStart(e.target.value)}
+                        style={{ width: "100%", marginBottom: 10 }}
+                    />
+
+                    <input
+                        type="time"
+                        value={end}
+                        onChange={(e) => setEnd(e.target.value)}
+                        style={{ width: "100%", marginBottom: 10 }}
+                    />
+
+                    <button onClick={saveShift}>保存</button>
+                    <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
+                        キャンセル
+                    </button>
+                </div>
             </div>
-        );
-        }}
-    />
-
-      {selectedDate && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ background: "white", padding: 20, borderRadius: 8 }}>
-            <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
-
-            <input
-              type="time"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              style={{ width: "100%", marginBottom: 10 }}
-            />
-
-            <input
-              type="time"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              style={{ width: "100%", marginBottom: 10 }}
-            />
-
-            <button onClick={saveShift}>保存</button>
-            <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
-              キャンセル
-            </button>
-          </div>
+        )}
+        
         </div>
-      )}
-    </div>
-  );
+    );
 }
