@@ -82,13 +82,13 @@ export default function ShiftSubmitPage() {
         });
 
         const json = await res.json();
+        setSaving(false);
 
         if (!res.ok) {
         alert(json.error ?? "保存に失敗しました");
         return;
         }
 
-        setSaving(false);
         setSelectedDate(null);
     }
     if(mounted){
@@ -163,7 +163,7 @@ export default function ShiftSubmitPage() {
                 }}
                 >
 
-                    <div style={{ background: "white", padding: 20, borderRadius: 8, opacity: saving ? 0.5 : 1, pointerEvents: saving ? "none" : "auto" }}>
+                    <div style={{ background: "white", padding: 20, borderRadius: 8, pointerEvents: saving ? "none" : "auto" }}>
                         <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
 
                         <input
