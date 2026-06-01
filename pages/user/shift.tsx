@@ -9,51 +9,70 @@ function trimSeconds(time: string) {
 }
 
 export default function ShiftSubmitPage() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [shifts, setShifts] = useState<Record<string, { start: string; end: string }>>({});
-  const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
-  const [saving, setSaving] = useState(false);
+    // 選択した日付
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  useEffect(() => {
-    setMounted(true);
-    fetchShiftsFromDB();
-  }, []);
+    // 設定する日時
+    const [start, setStart] = useState("");
+    const [end, setEnd] = useState("");
 
-  async function fetchShiftsFromDB() {
-    const res = await fetch("/api/shift/get");
-    const json = await res.json();
+    // 全シフト
+    const [shifts, setShifts] = useState<Record<string, { start: string; end: string }>>({});
 
-    if (res.ok) {
-      const formatted = Object.fromEntries(
-        Object.entries(json.shifts).map(([date, v]) => {
-          const val = v as { start: string; end: string };
-          return [
-            date,
-            {
-              start: trimSeconds(val.start),
-              end: trimSeconds(val.end),
-            },
-          ];
-        })
-      );
+    // ロード関係
+    const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
-      setShifts(formatted);
+    // シフト保存
+    const [saving, setSaving] = useState(false);
+
+    // シフト時間
+    const [startHour, setStartHour] = useState("00");
+    const [startMin, setStartMin] = useState("00");
+    const [endHour, setEndHour] = useState("00");
+    const [endMin, setEndMin] = useState("00");
+
+    useEffect(() => {
+        setMounted(true);
+        fetchShiftsFromDB();
+    }, []);
+
+    async function fetchShiftsFromDB() {
+        const res = await fetch("/api/shift/get");
+        const json = await res.json();
+
+        if (res.ok) {
+        const formatted = Object.fromEntries(
+            Object.entries(json.shifts).map(([date, v]) => {
+            const val = v as { start: string; end: string };
+            return [
+                date,
+                {
+                start: trimSeconds(val.start),
+                end: trimSeconds(val.end),
+                },
+            ];
+            })
+        );
+
+        setShifts(formatted);
+        }
+        setLoading(false);
     }
-    setLoading(false);
-  }
 
-  function openModal(date: Date) {
-    const key = date.toISOString().split("T")[0];
-    setSelectedDate(date);
-    setStart(shifts[key]?.start ?? "");
-    setEnd(shifts[key]?.end ?? "");
-  }
+    function openModal(date: Date) {
+        const key = date.toISOString().split("T")[0];
+        setSelectedDate(date);
+        setStart(shifts[key]?.start ?? "");
+        setEnd(shifts[key]?.end ?? "");
+    }
 
     async function saveShift() {
         if (!selectedDate) return;
+
+        const start = `${startHour}:${startMin}`;
+        const end = `${endHour}:${endMin}`;
+        
         const key = selectedDate.toISOString().split("T")[0];
         const startDate = new Date(`2000-01-01T${start}`);
         const endDate = new Date(`2000-01-01T${end}`);
@@ -111,7 +130,8 @@ export default function ShiftSubmitPage() {
                         openModal(date);
                     }}
                     tileDisabled={() => loading} // ← ロード中は全部クリック不可
-                    tileContent={({ date }) => {
+                    tileContent={({ date, view }) => {
+                        if (view !== "month") return null;
                         if (loading) {
                             return <div style={{ height: "32px" }}></div>; // ← 空の高さだけ
                         }
@@ -167,39 +187,35 @@ export default function ShiftSubmitPage() {
                     <div style={{ background: "white", padding: 20, borderRadius: 8, pointerEvents: saving ? "none" : "auto" }}>
                         <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
 
-                        <select
-                            value={start}
-                            onChange={(e) => setStart(e.target.value)}
-                            style={{ width: "100%", marginBottom: 10, padding: 8 }}
-                            >
-                            {Array.from({ length: 24 * 4 }).map((_, i) => {
-                                const h = Math.floor(i / 4);
-                                const m = (i % 4) * 15;
-                                const t = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                                return (
-                                <option key={t} value={t}>
-                                    {t}
-                                </option>
-                                );
-                            })}
-                        </select>
+                        <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                            <select value={startHour} onChange={(e) => setStartHour(e.target.value)}>
+                                {Array.from({ length: 24 }).map((_, h) => {
+                                    const hh = String(h).padStart(2, "0");
+                                    return <option key={hh} value={hh}>{hh}</option>;
+                                })}
+                            </select>
 
-                        <select
-                            value={end}
-                            onChange={(e) => setEnd(e.target.value)}
-                            style={{ width: "100%", marginBottom: 10, padding: 8 }}
-                            >
-                            {Array.from({ length: 24 * 4 }).map((_, i) => {
-                                const h = Math.floor(i / 4);
-                                const m = (i % 4) * 15;
-                                const t = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                                return (
-                                <option key={t} value={t}>
-                                    {t}
-                                </option>
-                                );
-                            })}
-                        </select>
+                            <select value={startMin} onChange={(e) => setStartMin(e.target.value)}>
+                                {["00", "15", "30", "45"].map((m) => (
+                                    <option key={m} value={m}>{m}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                            <select value={endHour} onChange={(e) => setStartHour(e.target.value)}>
+                                {Array.from({ length: 24 }).map((_, h) => {
+                                const hh = String(h).padStart(2, "0");
+                                return <option key={hh} value={hh}>{hh}</option>;
+                                })}
+                            </select>
+
+                            <select value={endMin} onChange={(e) => setStartMin(e.target.value)}>
+                                {["00", "15", "30", "45"].map((m) => (
+                                <option key={m} value={m}>{m}</option>
+                                ))}
+                            </select>
+                        </div>
 
                         <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
                         <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
