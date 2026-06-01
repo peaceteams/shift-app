@@ -54,7 +54,6 @@ export default function ShiftSubmitPage() {
 
     async function saveShift() {
         if (!selectedDate) return;
-        setSaving(true);
         const key = selectedDate.toISOString().split("T")[0];
         const startDate = new Date(`2000-01-01T${start}`);
         const endDate = new Date(`2000-01-01T${end}`);
@@ -63,6 +62,8 @@ export default function ShiftSubmitPage() {
             alert("終了時間は開始時間より後にしてください。");
             return;
         }
+
+        setSaving(true);
 
         // ローカル更新
         setShifts((prev) => ({
