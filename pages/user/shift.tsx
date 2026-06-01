@@ -94,52 +94,43 @@ export default function ShiftSubmitPage() {
             tileDisabled={() => loading}
             
             tileContent={({ date }) => {
-                try {
-                    console.log("tileContent date:", date);
+                const key = date.toISOString().split("T")[0];
+                const shift = shifts[key];
 
-                    const key = date.toISOString().split("T")[0];
-                    console.log("key:", key);
+                const hasShift = !!(shift && shift.start && shift.end);
 
-                    const shift = shifts[key];
-                    console.log("shift:", shift);
+                return (
+                    <div
+                    style={{
+                        fontSize: 12,
+                        color: hasShift ? "green" : "#aaa",
+                        height: "32px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        lineHeight: "14px",
+                    }}
+                    >
 
-                    const hasShift = shift && shift.start && shift.end;
-                    console.log("hasShift:", hasShift);
-
-                    return (
-                        <div
-                            style={{
-                            fontSize: 12,
-                            color: hasShift ? "green" : "#aaa",
-                            height: "32px",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            lineHeight: "14px",
-                            }}
-                        >
-                            {loading
-                            ? ""
-                            : hasShift
-                            ? (
-                                <>
-                                    <span>{shift.start}</span>
-                                    <span>{shift.end}</span>
-                                </>
-                                )
-                            : (
-                                <>
-                                    <span>–</span>
-                                    <span>–</span>
-                                </>
-                                )}
-                        </div>
-                    );
-                } catch (e) {
-                    console.error("tileContent ERROR:", e);
-                    return <div style={{ height: "32px" }}>ERR</div>;
-                }
+                    {loading ? (
+                        <>
+                        <span></span>
+                        <span></span>
+                        </>
+                    ) : hasShift ? (
+                        <>
+                        <span>{shift!.start}</span>
+                        <span>{shift!.end}</span>
+                        </>
+                    ) : (
+                        <>
+                        <span>–</span>
+                        <span>–</span>
+                        </>
+                    )}
+                    </div>
+                );                
             }}
         />
 
