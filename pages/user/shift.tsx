@@ -4,8 +4,8 @@ import "react-calendar/dist/Calendar.css";
 
 // 秒を消す
 function trimSeconds(time: string) {
-  if (!time) return "";
-  return time.slice(0, 5); // "20:00:00" → "20:00"
+    if (!time) return "";
+    return time.slice(0, 5); // "20:00:00" → "20:00"
 }
 
 export default function ShiftSubmitPage() {
@@ -72,7 +72,7 @@ export default function ShiftSubmitPage() {
 
         const start = `${startHour}:${startMin}`;
         const end = `${endHour}:${endMin}`;
-        
+
         const key = selectedDate.toISOString().split("T")[0];
         const startDate = new Date(`2000-01-01T${start}`);
         const endDate = new Date(`2000-01-01T${end}`);
@@ -203,14 +203,14 @@ export default function ShiftSubmitPage() {
                         </div>
 
                         <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                            <select value={endHour} onChange={(e) => setStartHour(e.target.value)}>
+                            <select value={endHour} onChange={(e) => setEndHour(e.target.value)}>
                                 {Array.from({ length: 24 }).map((_, h) => {
                                 const hh = String(h).padStart(2, "0");
                                 return <option key={hh} value={hh}>{hh}</option>;
                                 })}
                             </select>
 
-                            <select value={endMin} onChange={(e) => setStartMin(e.target.value)}>
+                            <select value={endMin} onChange={(e) => setEndMin(e.target.value)}>
                                 {["00", "15", "30", "45"].map((m) => (
                                 <option key={m} value={m}>{m}</option>
                                 ))}
