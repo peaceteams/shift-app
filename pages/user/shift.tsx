@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
@@ -79,95 +79,93 @@ export default function ShiftSubmitPage() {
 
         setSelectedDate(null);
     }
+    if(loading){
+        return (
+            <div style={{ padding: 20 }}>
 
-    const handleClickDay = useCallback((date: Date) => {
-        if (loading) return;
-        openModal(date);
-    }, [loading, openModal]);
+            <h1>シフト提出</h1>
+            
+            <Calendar
+                onClickDay={(date) => {
+                    if (loading) return;
+                    openModal(date);
+                }}
 
-    return (
-        <div style={{ padding: 20 }}>
+                tileContent={({ date }) => {
+                    const key = date.toISOString().split("T")[0];
+                    const shift = shifts[key];
+                    const start = shift?.start ?? null;
+                    const end = shift?.end ?? null;
 
-        <h1>シフト提出</h1>
-        
-        <Calendar
-            onClickDay={handleClickDay}
+                    return (
+                        <div
+                        style={{
+                            fontSize: 12,
+                            color: start && end ? "green" : "#aaa",
+                            height: "32px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            lineHeight: "14px",
+                        }}
+                        >
+                        {start && end ? (
+                            <>
+                            <span>{start}</span>
+                            <span>{end}</span>
+                            </>
+                        ) : (
+                            <>
+                            <span>–</span>
+                            <span>–</span>
+                            </>
+                        )}
+                        </div>
+                    );
+                }}
+            />
 
-            tileContent={({ date }) => {
-                const key = date.toISOString().split("T")[0];
-                const shift = shifts[key];
-                const start = shift?.start ?? null;
-                const end = shift?.end ?? null;
+            {selectedDate && (
+                <div
+                style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    width: "100vw",
+                    height: "100vh",
+                    background: "rgba(0,0,0,0.5)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}
+                >
 
-                return (
-                    <div
-                    style={{
-                        fontSize: 12,
-                        color: start && end ? "green" : "#aaa",
-                        height: "32px",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        lineHeight: "14px",
-                    }}
-                    >
-                    {start && end ? (
-                        <>
-                        <span>{start}</span>
-                        <span>{end}</span>
-                        </>
-                    ) : (
-                        <>
-                        <span>–</span>
-                        <span>–</span>
-                        </>
-                    )}
+                    <div style={{ background: "white", padding: 20, borderRadius: 8 }}>
+                        <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
+
+                        <input
+                            type="time"
+                            value={start}
+                            onChange={(e) => setStart(e.target.value)}
+                            style={{ width: "100%", marginBottom: 10 }}
+                        />
+
+                        <input
+                            type="time"
+                            value={end}
+                            onChange={(e) => setEnd(e.target.value)}
+                            style={{ width: "100%", marginBottom: 10 }}
+                        />
+
+                        <button onClick={saveShift}>保存</button>
+                        <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
+                            キャンセル
+                        </button>
                     </div>
-                );
-            }}
-        />
-
-        {selectedDate && (
-            <div
-            style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100vw",
-                height: "100vh",
-                background: "rgba(0,0,0,0.5)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-            }}
-            >
-
-                <div style={{ background: "white", padding: 20, borderRadius: 8 }}>
-                    <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
-
-                    <input
-                        type="time"
-                        value={start}
-                        onChange={(e) => setStart(e.target.value)}
-                        style={{ width: "100%", marginBottom: 10 }}
-                    />
-
-                    <input
-                        type="time"
-                        value={end}
-                        onChange={(e) => setEnd(e.target.value)}
-                        style={{ width: "100%", marginBottom: 10 }}
-                    />
-
-                    <button onClick={saveShift}>保存</button>
-                    <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
-                        キャンセル
-                    </button>
                 </div>
+            )}
+            
             </div>
-        )}
-        
-        </div>
-    );
-}
+        );
+}   };
