@@ -25,6 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(401).json({ error: "Invalid session" });
 
   const { date, start, end } = req.body;
+  const isoDate = new Date(date).toISOString();
 
   // 既存削除
   await supabaseAdmin
@@ -36,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 新規保存
   await supabaseAdmin.from("shift_requests").insert({
     user_id: session.user_id,
-    date,
+    isoDate,
     start_time: start,
     end_time: end,
   });
