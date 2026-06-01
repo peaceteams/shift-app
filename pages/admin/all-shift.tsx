@@ -1,7 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { GetServerSidePropsContext } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/auth/adminAuth";
+
+export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
+  const auth = await requireAdmin(ctx);
+
+  if (!auth.ok) {
+    return auth.redirect;
+  }
+
+  return {
+    props: {
+      admin: auth.user,
+    },
+  };
+};
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
