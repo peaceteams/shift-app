@@ -93,10 +93,14 @@ export default function ShiftSubmitPage() {
 
             tileContent={({ date }) => {
                 const key = date.toISOString().split("T")[0];
+                console.log(key);
                 const shift = shifts[key];
+                console.log(shift);
 
                 const start = shift?.start ?? null;
+                console.log(start);
                 const end = shift?.end ?? null;
+                console.log(end);
 
                 return (
                     <div
