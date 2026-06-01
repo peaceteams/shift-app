@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
@@ -8,6 +8,19 @@ export default function ShiftSubmitPage() {
     const [end, setEnd] = useState("");
     const [shifts, setShifts] = useState<Record<string, { start: string; end: string }>>({});
 
+    useEffect(() => {
+        fetchShiftsFromDB();
+    }, []);
+
+    async function fetchShiftsFromDB() {
+        const res = await fetch("/api/shift/get");
+        const json = await res.json();
+
+        if (res.ok) {
+        setShifts(json.shifts);
+        }
+    }
+
     function openModal(date: Date) {
         const key = date.toISOString().split("T")[0];
         setSelectedDate(date);
@@ -15,7 +28,7 @@ export default function ShiftSubmitPage() {
         setEnd(shifts[key]?.end ?? "");
     }
 
-    function saveShift() {
+    async function saveShift() {
         if (!selectedDate) return;
         const key = selectedDate.toISOString().split("T")[0];
 
@@ -24,17 +37,26 @@ export default function ShiftSubmitPage() {
             [key]: { start, end },
         }));
 
-        setSelectedDate(null);
-    }
+          // ② API に保存
+        const res = await fetch("/api/shift/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+            date: key,
+            start,
+            end,
+            }),
+        });
 
-    function debounce(fn: (...args: any[]) => void, delay = 500) {
-        let timer: NodeJS.Timeout;
-        return (...args: any[]) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => fn(...args), delay);
-        };
-    }
+        const json = await res.json();
 
+        if (!res.ok) {
+            alert(json.error ?? "保存に失敗しました");
+            return;
+        }
+
+            setSelectedDate(null);
+        }
 
     return (
         <div style={{ padding: 20 }}>

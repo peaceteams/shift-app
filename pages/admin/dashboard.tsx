@@ -268,7 +268,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   // 🔗 ワンタイムリンク管理
   // ---------------------------------------------------------
   async function generateLink(user_id: string) {
-    await fetch("/api/shift/regenerate", {
+    await fetch("/api/onetime/regenerate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
@@ -276,7 +276,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }
 
   async function deleteLink(user_id: string) {
-    await fetch("/api/shift/delete", {
+    await fetch("/api/onetime/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
@@ -284,7 +284,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }
 
   async function sendLink(user_id: string) {
-    await fetch("/api/shift/send", {
+    await fetch("/api/onetime/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id }),
@@ -295,15 +295,15 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   // 🧩 一括操作
   // ---------------------------------------------------------
   async function generateAll() {
-    await fetch("/api/shift/regenerate-all", { method: "POST" });
+    await fetch("/api/onetime/regenerate-all", { method: "POST" });
   }
 
   async function deleteAll() {
-    await fetch("/api/shift/delete-all", { method: "POST" });
+    await fetch("/api/onetime/delete-all", { method: "POST" });
   }
 
   async function sendAll() {
-    await fetch("/api/shift/send-all", { method: "POST" });
+    await fetch("/api/onetime/send-all", { method: "POST" });
   }
 
   // ---------------------------------------------------------
