@@ -57,16 +57,23 @@ async function load() {
     setShifts(shiftRequests || []);
 }
 
-// 今月の日付一覧を作る
+// 今月1日〜2か月後の月末までの日付一覧を作る
 const today = new Date();
-const year = today.getFullYear();
-const month = today.getMonth();
-const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-const dates = Array.from({ length: daysInMonth }).map((_, i) => {
-    const d = new Date(year, month, i + 1);
-    return d.toISOString().split("T")[0];
-});
+// 今月の1日
+const start = new Date(today.getFullYear(), today.getMonth(), 1);
+
+// 2か月後の月末（month + 3 の day=0 → 2か月後の末日）
+const end = new Date(today.getFullYear(), today.getMonth() + 3, 0);
+
+// start〜end の全日付を生成
+const dates: string[] = [];
+let d = new Date(start);
+
+while (d <= end) {
+  dates.push(d.toISOString().split("T")[0]);
+  d.setDate(d.getDate() + 1);
+}
 
 return (
     <div style={{ padding: 20 }}>
