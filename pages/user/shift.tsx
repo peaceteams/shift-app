@@ -28,16 +28,25 @@ export default function ShiftSubmitPage() {
         setEnd(shifts[key]?.end ?? "");
     }
 
+    function formatDateLocal(date: Date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    }
+
     async function saveShift() {
         if (!selectedDate) return;
-        const key = selectedDate.toISOString().split("T")[0];
 
+        const key = formatDateLocal(selectedDate);
+
+        // ローカル state 更新
         setShifts((prev) => ({
             ...prev,
             [key]: { start, end },
         }));
 
-          // ② API に保存
+        // API 保存
         const res = await fetch("/api/shift/submit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -55,8 +64,8 @@ export default function ShiftSubmitPage() {
             return;
         }
 
-            setSelectedDate(null);
-        }
+        setSelectedDate(null);
+    }
 
     return (
         <div style={{ padding: 20 }}>
