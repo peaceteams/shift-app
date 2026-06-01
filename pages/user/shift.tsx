@@ -85,53 +85,58 @@ export default function ShiftSubmitPage() {
         return (
             <div style={{ padding: 20 }}>
 
-            <h1>シフト提出</h1>
+            <h1 style={{ textAlign: "center" }}>シフト提出</h1>
             
-            <Calendar
-                onClickDay={(date) => {
-                    if (loading) return; // ← ロード中は無効化
-                    openModal(date);
-                }}
-                tileDisabled={() => loading} // ← ロード中は全部クリック不可
-
-                tileContent={({ date }) => {
-                    if (loading) {
-                        return <div style={{ height: "32px" }}></div>; // ← 空の高さだけ
-                    }
-
-                    const key = date.toISOString().split("T")[0];
-                    const shift = shifts[key];
-                    const start = shift?.start ?? null;
-                    const end = shift?.end ?? null;
-
-                    return (
-                        <div
-                        style={{
-                            fontSize: 12,
-                            color: start && end ? "green" : "#aaa",
-                            height: "32px",
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            lineHeight: "14px",
-                        }}
-                        >
-                        {start && end ? (
-                            <>
-                            <span>{start}</span>
-                            <span>{end}</span>
-                            </>
-                        ) : (
-                            <>
-                            <span>–</span>
-                            <span>–</span>
-                            </>
-                        )}
-                        </div>
-                    );
-                }}
-            />
+            <div
+                style={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: 40,
+            }}>
+                
+                <Calendar
+                    onClickDay={(date) => {
+                        if (loading) return; // ← ロード中は無効化
+                        openModal(date);
+                    }}
+                    tileDisabled={() => loading} // ← ロード中は全部クリック不可
+                    tileContent={({ date }) => {
+                        if (loading) {
+                            return <div style={{ height: "32px" }}></div>; // ← 空の高さだけ
+                        }
+                        const key = date.toISOString().split("T")[0];
+                        const shift = shifts[key];
+                        const start = shift?.start ?? null;
+                        const end = shift?.end ?? null;
+                        return (
+                            <div
+                            style={{
+                                fontSize: 12,
+                                color: start && end ? "green" : "#aaa",
+                                height: "32px",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                lineHeight: "14px",
+                            }}
+                            >
+                            {start && end ? (
+                                <>
+                                <span>{start}</span>
+                                <span>{end}</span>
+                                </>
+                            ) : (
+                                <>
+                                <span>–</span>
+                                <span>–</span>
+                                </>
+                            )}
+                            </div>
+                        );
+                    }}
+                />
+            </div>
 
             {selectedDate && (
                 <div
