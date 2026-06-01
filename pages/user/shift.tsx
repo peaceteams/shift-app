@@ -167,19 +167,39 @@ export default function ShiftSubmitPage() {
                     <div style={{ background: "white", padding: 20, borderRadius: 8, pointerEvents: saving ? "none" : "auto" }}>
                         <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
 
-                        <input
-                            type="time"
+                        <select
                             value={start}
                             onChange={(e) => setStart(e.target.value)}
-                            style={{ width: "100%", marginBottom: 10 }}
-                        />
+                            style={{ width: "100%", marginBottom: 10, padding: 8 }}
+                            >
+                            {Array.from({ length: 24 * 4 }).map((_, i) => {
+                                const h = Math.floor(i / 4);
+                                const m = (i % 4) * 15;
+                                const t = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                return (
+                                <option key={t} value={t}>
+                                    {t}
+                                </option>
+                                );
+                            })}
+                        </select>
 
-                        <input
-                            type="time"
+                        <select
                             value={end}
                             onChange={(e) => setEnd(e.target.value)}
-                            style={{ width: "100%", marginBottom: 10 }}
-                        />
+                            style={{ width: "100%", marginBottom: 10, padding: 8 }}
+                            >
+                            {Array.from({ length: 24 * 4 }).map((_, i) => {
+                                const h = Math.floor(i / 4);
+                                const m = (i % 4) * 15;
+                                const t = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                return (
+                                <option key={t} value={t}>
+                                    {t}
+                                </option>
+                                );
+                            })}
+                        </select>
 
                         <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
                         <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
