@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
@@ -80,27 +80,24 @@ export default function ShiftSubmitPage() {
         setSelectedDate(null);
     }
 
+    const handleClickDay = useCallback((date: Date) => {
+        if (loading) return;
+        openModal(date);
+    }, [loading, openModal]);
+
     return (
         <div style={{ padding: 20 }}>
 
         <h1>シフト提出</h1>
         
         <Calendar
-            onClickDay={(date) => {
-                if (loading) return;
-                openModal(date);
-            }}
+            onClickDay={handleClickDay}
 
             tileContent={({ date }) => {
                 const key = date.toISOString().split("T")[0];
-                console.log(key);
                 const shift = shifts[key];
-                console.log(shift);
-
                 const start = shift?.start ?? null;
-                console.log(start);
                 const end = shift?.end ?? null;
-                console.log(end);
 
                 return (
                     <div
