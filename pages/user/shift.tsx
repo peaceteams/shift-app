@@ -83,36 +83,36 @@ export default function ShiftSubmitPage() {
     <div style={{ padding: 20 }}>
       <h1>シフト提出</h1>
 
-        <Calendar
+    <Calendar
         onClickDay={(date) => {
             if (loading) return;
             openModal(date);
         }}
         tileDisabled={() => loading}
         tileContent={({ date }) => {
-        if (loading) {
+            if (loading) {
             return <div style={{ height: "16px" }}></div>;
-        }
+            }
 
-        const key = date.toISOString().split("T")[0];
-        const shift = shifts[key];
+            const key = date.toISOString().split("T")[0];
+            const shift = shifts[key];
 
-        return (
+            return (
             <div
-            style={{
+                style={{
                 fontSize: 12,
                 color: shift ? "green" : "#aaa",
                 height: "16px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-            }}
+                }}
             >
-            {shift ? `${shift.start} - ${shift.end}` : "–"}
+                {shift ? `${shift.start} - ${shift.end}` : "–"}
             </div>
-        );
+            );
         }}
-      />
+    />
 
       {selectedDate && (
         <div
