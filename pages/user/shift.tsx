@@ -99,7 +99,7 @@ export default function ShiftSubmitPage() {
                 openModal(date);
             }}
             
-            tileDisabled={() => loading}
+            tileDisabled={() => !!loading}
             
             tileContent={({ date }) => {
                 const key = date.toISOString().split("T")[0];
