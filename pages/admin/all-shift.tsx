@@ -71,8 +71,13 @@ const dates: string[] = [];
 let d = new Date(start);
 
 while (d <= end) {
-  dates.push(d.toISOString().split("T")[0]);
-  d.setDate(d.getDate() + 1);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+
+    dates.push(`${yyyy}-${mm}-${dd}`); // ← これで絶対にズレない
+
+    d.setDate(d.getDate() + 1);
 }
 
 return (
