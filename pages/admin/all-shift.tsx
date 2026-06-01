@@ -8,6 +8,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+function formatTime(t?: string) {
+  if (!t) return "–";
+  return t.slice(0, 5); // "HH:MM"
+}
+
 export default function AllShiftPage() {
     type User = {
     id: string;
@@ -72,8 +77,19 @@ return (
                         );
 
                         return (
-                        <td key={d} style={{ textAlign: "center" }}>
-                            {shift ? `${shift.start_time}〜${shift.end_time}` : "–"}
+                        <td 
+                            key={d}
+                            style={{
+                                textAlign: "center",
+                                width: 70,
+                                minWidth: 70,
+                                padding: 4
+                            }}
+                        >
+                            <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
+                                <span>{shift ? formatTime(shift.start_time) : "–"}</span>
+                                <span>{shift ? formatTime(shift.end_time) : "–"}</span>
+                            </div>
                         </td>
                         );
                     })}
