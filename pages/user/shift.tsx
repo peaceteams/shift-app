@@ -13,6 +13,7 @@ export default function ShiftSubmitPage() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [shifts, setShifts] = useState<Record<string, { start: string; end: string }>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchShiftsFromDB();
@@ -82,26 +83,34 @@ export default function ShiftSubmitPage() {
     <div style={{ padding: 20 }}>
       <h1>シフト提出</h1>
 
-      <Calendar
-        onClickDay={(date) => openModal(date)}
+        <Calendar
+        onClickDay={(date) => {
+            if (loading) return;
+            openModal(date);
+        }}
+        tileDisabled={() => loading}
         tileContent={({ date }) => {
-          const key = date.toISOString().split("T")[0];
-          const shift = shifts[key];
+        if (loading) {
+            return <div style={{ height: "16px" }}></div>;
+        }
 
-          return (
+        const key = date.toISOString().split("T")[0];
+        const shift = shifts[key];
+
+        return (
             <div
-              style={{
+            style={{
                 fontSize: 12,
                 color: shift ? "green" : "#aaa",
-                height: "16px", // ← 高さ固定
+                height: "16px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-              }}
+            }}
             >
-              {shift ? `${shift.start} - ${shift.end}` : "–"}
+            {shift ? `${shift.start} - ${shift.end}` : "–"}
             </div>
-          );
+        );
         }}
       />
 
