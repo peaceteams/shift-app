@@ -38,11 +38,12 @@ export default function ShiftSubmitPage() {
       );
 
       setShifts(formatted);
+      setLoading(false);
     }
   }
 
   function openModal(date: Date) {
-    const key = date.toISOString().split("T")[0]; // ← ズレ防止なし
+    const key = date.toISOString().split("T")[0];
     setSelectedDate(date);
     setStart(shifts[key]?.start ?? "");
     setEnd(shifts[key]?.end ?? "");
