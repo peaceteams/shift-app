@@ -312,7 +312,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   return (
     <div style={{ padding: 20 }}>
       <h1>管理者ダッシュボード</h1>
-      <p>ログイン中: {user.email}</p>
 
       <section style={{ marginTop: 40 }}>
         <h2>操作一覧</h2>
@@ -341,7 +340,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       />
 
       <section style={{ marginTop: 40 }}>
-        <h2>メンバー一覧（Realtime + 提出状況）</h2>
+        <h2>メンバー</h2>
 
         <ul>
           {filteredMembers.map((m) => (
