@@ -81,7 +81,7 @@ export default function ShiftSubmitPage() {
 
         setSelectedDate(null);
     }
-    if(mounted){
+    if(!mounted){
         return (
             <div style={{ padding: 20 }}>
 
@@ -94,6 +94,10 @@ export default function ShiftSubmitPage() {
                 }}
 
                 tileContent={({ date }) => {
+                    if (loading) {
+                        return <div style={{ height: "32px" }}></div>; // ← 空の高さだけ
+                    }
+
                     const key = date.toISOString().split("T")[0];
                     const shift = shifts[key];
                     const start = shift?.start ?? null;
@@ -103,7 +107,7 @@ export default function ShiftSubmitPage() {
                         <div
                         style={{
                             fontSize: 12,
-                            color: loading ? "green" : "#aaa",
+                            color: start && end ? "green" : "#aaa",
                             height: "32px",
                             display: "flex",
                             flexDirection: "column",
