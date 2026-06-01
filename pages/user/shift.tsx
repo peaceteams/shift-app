@@ -81,7 +81,7 @@ export default function ShiftSubmitPage() {
 
         setSelectedDate(null);
     }
-    if(!mounted){
+    if(mounted){
         return (
             <div style={{ padding: 20 }}>
 
