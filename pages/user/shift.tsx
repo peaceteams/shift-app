@@ -85,6 +85,14 @@ export default function ShiftSubmitPage() {
 
         <h1>シフト提出</h1>
 
+        {(() => {
+        console.log("=== BEFORE CALENDAR RENDER ===");
+        console.log("loading:", loading);
+        console.log("shifts:", shifts);
+        console.log("selectedDate:", selectedDate);
+        return null;
+        })()}
+
         <Calendar
             onClickDay={(date) => {
                 if (loading) return;
