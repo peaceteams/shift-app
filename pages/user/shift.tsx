@@ -80,34 +80,6 @@ export default function ShiftSubmitPage() {
         setSelectedDate(null);
     }
 
-    if (loading) {
-        return (
-            <div style={{ padding: 20 }}>
-
-                <h1>シフト提出</h1>
-                
-                <div
-                    style={{
-                        fontSize: 12,
-                        color: "#aaa",
-                        height: "32px",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        lineHeight: "14px",
-                    }}
-                >
-
-                <>
-                <span>–</span>
-                <span>–</span>
-                </>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div style={{ padding: 20 }}>
 
@@ -118,18 +90,19 @@ export default function ShiftSubmitPage() {
                 if (loading) return;
                 openModal(date);
             }}
-            
-            tileDisabled={() => loading}
-            
+
             tileContent={({ date }) => {
                 const key = date.toISOString().split("T")[0];
                 const shift = shifts[key];
+
+                const start = shift?.start ?? null;
+                const end = shift?.end ?? null;
 
                 return (
                     <div
                     style={{
                         fontSize: 12,
-                        color: shift ? "green" : "#aaa",
+                        color: start && end ? "green" : "#aaa",
                         height: "32px",
                         display: "flex",
                         flexDirection: "column",
@@ -138,11 +111,10 @@ export default function ShiftSubmitPage() {
                         lineHeight: "14px",
                     }}
                     >
-
-                    {shift ? (
+                    {start && end ? (
                         <>
-                        <span>{shift!.start}</span>
-                        <span>{shift!.end}</span>
+                        <span>{start}</span>
+                        <span>{end}</span>
                         </>
                     ) : (
                         <>
@@ -151,7 +123,7 @@ export default function ShiftSubmitPage() {
                         </>
                     )}
                     </div>
-                );                
+                );
             }}
         />
 
