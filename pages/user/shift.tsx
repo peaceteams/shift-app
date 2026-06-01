@@ -16,6 +16,7 @@ export default function ShiftSubmitPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(false);
     fetchShiftsFromDB();
   }, []);
 
@@ -39,7 +40,6 @@ export default function ShiftSubmitPage() {
 
       setShifts(formatted);
     }
-    setLoading(false);
   }
 
   function openModal(date: Date) {
