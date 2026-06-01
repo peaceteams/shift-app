@@ -91,26 +91,22 @@ export default function ShiftSubmitPage() {
         }}
         tileDisabled={() => loading}
         tileContent={({ date }) => {
-            if (loading) {
-            return <div style={{ height: "16px" }}></div>;
-            }
-
             const key = date.toISOString().split("T")[0];
             const shift = shifts[key];
 
             return (
-            <div
+                <div
                 style={{
-                fontSize: 12,
-                color: shift ? "green" : "#aaa",
-                height: "16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                    fontSize: 12,
+                    color: shift ? "green" : "#aaa",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                 }}
-            >
-                {shift ? `${shift.start} - ${shift.end}` : "–"}
-            </div>
+                >
+                {loading ? "" : shift ? `${shift.start} - ${shift.end}` : "–"}
+                </div>
             );
         }}
     />
