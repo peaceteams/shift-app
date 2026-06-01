@@ -15,6 +15,7 @@ export default function ShiftSubmitPage() {
   const [shifts, setShifts] = useState<Record<string, { start: string; end: string }>>({});
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -53,7 +54,15 @@ export default function ShiftSubmitPage() {
 
     async function saveShift() {
         if (!selectedDate) return;
+        setSaving(true);
         const key = selectedDate.toISOString().split("T")[0];
+        const startDate = new Date(`2000-01-01T${start}`);
+        const endDate = new Date(`2000-01-01T${end}`);
+
+        if (endDate <= startDate) {
+            alert("終了時間は開始時間より後にしてください。");
+            return;
+        }
 
         // ローカル更新
         setShifts((prev) => ({
@@ -79,6 +88,7 @@ export default function ShiftSubmitPage() {
         return;
         }
 
+        setSaving(false);
         setSelectedDate(null);
     }
     if(mounted){
@@ -93,7 +103,7 @@ export default function ShiftSubmitPage() {
                 justifyContent: "center",
                 marginTop: 40,
             }}>
-                
+
                 <Calendar
                     onClickDay={(date) => {
                         if (loading) return; // ← ロード中は無効化
@@ -153,7 +163,7 @@ export default function ShiftSubmitPage() {
                 }}
                 >
 
-                    <div style={{ background: "white", padding: 20, borderRadius: 8 }}>
+                    <div style={{ background: "white", padding: 20, borderRadius: 8, opacity: saving ? 0.5 : 1, pointerEvents: saving ? "none" : "auto" }}>
                         <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
 
                         <input
@@ -170,7 +180,7 @@ export default function ShiftSubmitPage() {
                             style={{ width: "100%", marginBottom: 10 }}
                         />
 
-                        <button onClick={saveShift}>保存</button>
+                        <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
                         <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
                             キャンセル
                         </button>
