@@ -48,8 +48,8 @@ export default function ShiftSubmitPage() {
             return [
                 date,
                 {
-                start: trimSeconds(val.start),
-                end: trimSeconds(val.end),
+                    start: trimSeconds(val.start),
+                    end: trimSeconds(val.end),
                 },
             ];
             })
@@ -129,7 +129,17 @@ export default function ShiftSubmitPage() {
                         if (loading) return; // ← ロード中は無効化
                         openModal(date);
                     }}
-                    tileDisabled={() => loading} // ← ロード中は全部クリック不可
+                    tileDisabled={({ date, view }) => {
+                        if (view !== "month") return false;
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        return (
+                            loading ||        // ← ロード中は無効
+                            date < today      // ← 過去日は無効
+                        );
+                    }}
                     tileContent={({ date, view }) => {
                         if (view !== "month") return null;
                         if (loading) {
