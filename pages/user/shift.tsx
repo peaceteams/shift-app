@@ -79,7 +79,7 @@ export default function ShiftSubmitPage() {
 
         setSelectedDate(null);
     }
-    if(loading){
+    if(!loading){
         return (
             <div style={{ padding: 20 }}>
 
