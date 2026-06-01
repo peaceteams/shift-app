@@ -38,8 +38,8 @@ export default function ShiftSubmitPage() {
       );
 
       setShifts(formatted);
-      setLoading(false);
     }
+    setLoading(false);
   }
 
   function openModal(date: Date) {
