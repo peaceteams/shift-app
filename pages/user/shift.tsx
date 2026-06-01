@@ -14,9 +14,10 @@ export default function ShiftSubmitPage() {
   const [end, setEnd] = useState("");
   const [shifts, setShifts] = useState<Record<string, { start: string; end: string }>>({});
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setLoading(false);
+    setMounted(true);
     fetchShiftsFromDB();
   }, []);
 
@@ -40,6 +41,7 @@ export default function ShiftSubmitPage() {
 
       setShifts(formatted);
     }
+    setLoading(false);
   }
 
   function openModal(date: Date) {
@@ -79,7 +81,7 @@ export default function ShiftSubmitPage() {
 
         setSelectedDate(null);
     }
-    if(!loading){
+    if(!mounted){
         return (
             <div style={{ padding: 20 }}>
 
@@ -101,7 +103,7 @@ export default function ShiftSubmitPage() {
                         <div
                         style={{
                             fontSize: 12,
-                            color: start && end ? "green" : "#aaa",
+                            color: loading ? "green" : "#aaa",
                             height: "32px",
                             display: "flex",
                             flexDirection: "column",
