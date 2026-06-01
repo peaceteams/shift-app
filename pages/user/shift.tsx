@@ -89,9 +89,10 @@ export default function ShiftSubmitPage() {
             
             <Calendar
                 onClickDay={(date) => {
-                    if (loading) return;
+                    if (loading) return; // ← ロード中は無効化
                     openModal(date);
                 }}
+                tileDisabled={() => loading} // ← ロード中は全部クリック不可
 
                 tileContent={({ date }) => {
                     if (loading) {
