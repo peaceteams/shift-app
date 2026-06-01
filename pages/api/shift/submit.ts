@@ -1,4 +1,4 @@
-// /pages/api/shift/submit.ts
+// /api/shift/submit.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { parse } from "cookie";
@@ -16,7 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // セッションから user_id を取得
   const { data: session } = await supabaseAdmin
     .from("user_sessions")
     .select("user_id")
@@ -25,22 +24,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!session) return res.status(401).json({ error: "Invalid session" });
 
-  const { shifts } = req.body;
+  const { date, start, end } = req.body;
 
-  // 既存削除 → 新規登録（上書き方式）
+  // 既存削除
   await supabaseAdmin
     .from("shift_requests")
     .delete()
-    .eq("user_id", session.user_id);
+    .eq("user_id", session.user_id)
+    .eq("date", date);
 
-  const rows = Object.entries(shifts).map(([date, v]: any) => ({
+  // 新規保存
+  await supabaseAdmin.from("shift_requests").insert({
     user_id: session.user_id,
     date,
-    start_time: v.start,
-    end_time: v.end,
-  }));
-
-  await supabaseAdmin.from("shift_requests").insert(rows);
+    start_time: start,
+    end_time: end,
+  });
 
   return res.json({ ok: true });
 }
