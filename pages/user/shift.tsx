@@ -27,6 +27,9 @@ export default function ShiftSubmitPage() {
     // シフト保存
     const [saving, setSaving] = useState(false);
 
+    // シフト削除
+    const [deleting, setDeleting] = useState(false);
+
     // シフト時間
     const [startHour, setStartHour] = useState("00");
     const [startMin, setStartMin] = useState("00");
@@ -38,7 +41,7 @@ export default function ShiftSubmitPage() {
 
     useEffect(() => {
         setMounted(true);
-        
+
         async function loadUser() {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user); // ← user を state に保存する
@@ -74,6 +77,7 @@ export default function ShiftSubmitPage() {
     async function deleteShift() {
         if (!selectedDate) return;
 
+        setDeleting(true);
         const key = selectedDate.toISOString().split("T")[0];
 
         // DB から削除
@@ -90,9 +94,9 @@ export default function ShiftSubmitPage() {
             return copy;
         });
 
+        setDeleting(false);
         setSelectedDate(null);
     }
-
 
     function openModal(date: Date) {
         const key = date.toISOString().split("T")[0];
@@ -228,7 +232,7 @@ export default function ShiftSubmitPage() {
                 }}
                 >
 
-                    <div style={{ background: "white", padding: 20, borderRadius: 8, pointerEvents: saving ? "none" : "auto" }}>
+                    <div style={{ background: "white", padding: 20, borderRadius: 8, pointerEvents: saving || deleting ? "none" : "auto" }}>
                         <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
 
                         <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
@@ -262,6 +266,14 @@ export default function ShiftSubmitPage() {
                         </div>
 
                         <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
+
+                        <button
+                            onClick={deleteShift}
+                            style={{ marginLeft: 10, color: "red" }}
+                        >
+                            {deleting ? "削除中..." : "削除"}
+                        </button>
+
                         <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
                             キャンセル
                         </button>
