@@ -37,15 +37,23 @@ export default function ShiftSubmitPage() {
     const [endMin, setEndMin] = useState("00");
 
     // ユーザー情報
-    const [user, setUser] = useState<any>(null);
+    const [profile, setProfile] = useState<any>(null);
 
     useEffect(() => {
         setMounted(true);
 
-        async function loadUser() {
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user); // ← user を state に保存する
-        }
+    async function loadUser() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+        setProfile(profiles);
+    }
 
         loadUser();
         fetchShiftsFromDB();
@@ -75,26 +83,22 @@ export default function ShiftSubmitPage() {
     }
 
     async function deleteShift() {
-        if (!selectedDate) return;
+        if (!selectedDate || !profile) return;
 
-        setDeleting(true);
         const key = selectedDate.toISOString().split("T")[0];
 
-        // DB から削除
         await supabase
             .from("shift_requests")
             .delete()
-            .eq("user_id", user.id)
+            .eq("user_id", profile.user_id) // ← これが正しい
             .eq("date", key);
 
-        // ローカル state から削除（Record 用）
         setShifts((prev) => {
             const copy = { ...prev };
             delete copy[key];
             return copy;
         });
 
-        setDeleting(false);
         setSelectedDate(null);
     }
 
@@ -143,8 +147,8 @@ export default function ShiftSubmitPage() {
         setSaving(false);
 
         if (!res.ok) {
-        alert(json.error ?? "保存に失敗しました");
-        return;
+            alert(json.error ?? "保存に失敗しました");
+            return;
         }
 
         setSelectedDate(null);
