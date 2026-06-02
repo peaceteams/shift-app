@@ -56,6 +56,8 @@ export default function AllShiftPage() {
     const [shifts, setShifts] = useState<Shift[]>([]);
 
     useEffect(() => {
+        load();
+
         const channel = supabase
             .channel("shift-rt")
             .on(
