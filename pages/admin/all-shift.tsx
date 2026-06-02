@@ -40,29 +40,44 @@ function addOneDay(dateStr: string) {
 
 export default function AllShiftPage() {
     type User = {
-    id: string;
-    name: string;
+        id: string;
+        userId: string;
+        name: string;
     };
 
     type Shift = {
-    user_id: string;
-    date: string;
-    start_time: string;
-    end_time: string;
+        user_id: string;
+        date: string;
+        start_time: string;
+        end_time: string;
     };
 
     const [users, setUsers] = useState<User[]>([]);
     const [shifts, setShifts] = useState<Shift[]>([]);
 
     useEffect(() => {
-        load();
+        const channel = supabase
+            .channel("shift-rt")
+            .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "shift_requests" },
+            () => {
+                load();
+            }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
 async function load() {
     const { data: profiles } = await supabase.from("profiles").select("*");
     const { data: shiftRequests } = await supabase.from("shift_requests").select("*");
-
-    setUsers(profiles || []);
+    const sorted = (profiles || []).sort((a, b) => Number(a.userId) - Number(b.userId));
+    
+    setUsers(sorted);
     setShifts(shiftRequests || []);
 }
 
@@ -107,6 +122,7 @@ return (
                 {users.map((u) => (
                     <tr key={u.id}>
                     <td>{u.name}</td>
+                    <td>{u.userId}</td>
 
                     {dates.map((d) => {
                         const shift = shifts.find(
