@@ -77,7 +77,7 @@ export default function AllShiftPage() {
 async function load() {
     const { data: profiles } = await supabase.from("profiles").select("*");
     const { data: shiftRequests } = await supabase.from("shift_requests").select("*");
-    const sorted = (profiles || []).sort((a, b) => Number(a.userId) - Number(b.userId));
+    const sorted = (profiles || []).sort((a, b) => Number(a.user_id) - Number(b.user_id));
     
     setUsers(sorted);
     setShifts(shiftRequests || []);
@@ -110,7 +110,7 @@ return (
     <div style={{ padding: 20 }}>
         <h1>全メンバーのシフト一覧</h1>
 
-        <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", }}>
+        <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", width: "100%", }}>
             <colgroup>
                 <col style={{ width: "200px" }} />  {/* 名前 */}
                 <col style={{ width: "150px" }} />   {/* ユーザーID */}
