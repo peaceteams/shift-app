@@ -110,7 +110,7 @@ return (
     <div style={{ padding: 20 }}>
         <h1>全メンバーのシフト一覧</h1>
 
-        <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse" }}>
+        <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", }}>
             <colgroup>
                 <col style={{ width: "200px" }} />  {/* 名前 */}
                 <col style={{ width: "150px" }} />   {/* ユーザーID */}
