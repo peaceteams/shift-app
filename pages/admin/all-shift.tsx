@@ -114,8 +114,9 @@ return (
             <thead>
                 <tr>
                     <th>名前</th>
+                    <th>ユーザーID（番号）</th>
                     {dates.map((d) => (
-                    <th key={d}>{d.slice(5)}</th>
+                        <th key={d}>{d.slice(5)}</th>
                     ))}
                 </tr>
             </thead>
