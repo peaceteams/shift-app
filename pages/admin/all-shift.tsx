@@ -112,8 +112,8 @@ return (
 
         <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", width: "100%", }}>
             <colgroup>
-                <col style={{ width: "200px" }} />  {/* 名前 */}
-                <col style={{ width: "150px" }} />   {/* ユーザーID */}
+                <col style={{ width: "100px" }} />  {/* 名前 */}
+                <col style={{ width: "100px" }} />   {/* ユーザーID */}
                 {dates.map(() => (
                     <col key={crypto.randomUUID()} style={{ width: "100px" }} />  // 日付列
                 ))}
