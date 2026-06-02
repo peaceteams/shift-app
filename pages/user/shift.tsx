@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import { supabase } from "@/lib/supabase/client";
 
 // 秒を消す
 function trimSeconds(time: string) {
@@ -32,8 +33,18 @@ export default function ShiftSubmitPage() {
     const [endHour, setEndHour] = useState("00");
     const [endMin, setEndMin] = useState("00");
 
+    // ユーザー情報
+    const [user, setUser] = useState<any>(null);
+
     useEffect(() => {
         setMounted(true);
+        
+        async function loadUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user); // ← user を state に保存する
+        }
+
+        loadUser();
         fetchShiftsFromDB();
     }, []);
 
@@ -59,6 +70,29 @@ export default function ShiftSubmitPage() {
         }
         setLoading(false);
     }
+
+    async function deleteShift() {
+        if (!selectedDate) return;
+
+        const key = selectedDate.toISOString().split("T")[0];
+
+        // DB から削除
+        await supabase
+            .from("shift_requests")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("date", key);
+
+        // ローカル state から削除（Record 用）
+        setShifts((prev) => {
+            const copy = { ...prev };
+            delete copy[key];
+            return copy;
+        });
+
+        setSelectedDate(null);
+    }
+
 
     function openModal(date: Date) {
         const key = date.toISOString().split("T")[0];
