@@ -41,7 +41,7 @@ function addOneDay(dateStr: string) {
 export default function AllShiftPage() {
     type User = {
         id: string;
-        userId: string;
+        user_id: string;
         name: string;
     };
 
@@ -111,6 +111,14 @@ return (
         <h1>全メンバーのシフト一覧</h1>
 
         <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse" }}>
+            <colgroup>
+                <col style={{ width: "120px" }} />  {/* 名前 */}
+                <col style={{ width: "80px" }} />   {/* ユーザーID */}
+                {dates.map(() => (
+                    <col key={crypto.randomUUID()} style={{ width: "70px" }} />  // 日付列
+                ))}
+            </colgroup>
+
             <thead>
                 <tr>
                     <th>名前</th>
@@ -124,8 +132,8 @@ return (
             <tbody>
                 {users.map((u) => (
                     <tr key={u.id}>
-                    <td>{u.name}</td>
-                    <td>{u.userId}</td>
+                    <td style={{ textAlign: "center", padding: 4 }}>{u.name}</td>
+                    <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
 
                     {dates.map((d) => {
                         const shift = shifts.find(
@@ -137,8 +145,6 @@ return (
                             key={d}
                             style={{
                                 textAlign: "center",
-                                width: 70,
-                                minWidth: 70,
                                 padding: 4
                             }}
                         >
