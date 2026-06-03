@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Cookie から token を取得
   const cookies = parse(req.headers.cookie || "");
-  const token = cookies.token;
+  const token = cookies.user_session;
 
   if (!token) {
     return res.status(401).json({ error: "No token" });
