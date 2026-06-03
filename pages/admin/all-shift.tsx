@@ -25,12 +25,12 @@ function formatTime(t?: string) {
 }
 
 function addDayStr(dateStr: string) {
-    const d = new Date(dateStr + "T00:00:00"); // ← JST固定
-    d.setDate(d.getDate() + 1);
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d + 1); // ← ここだけ Date を使う（安全）
 
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
 
     return `${yyyy}-${mm}-${dd}`;
 }
@@ -122,7 +122,7 @@ export default function AllShiftPage() {
         dates.push(current);
         current = addDayStr(current); // ← これだけ
     }
-    
+
     function adjustScale() {
         const wrapper = document.getElementById("table-wrapper");
         const scaleBox = document.getElementById("table-scale");
