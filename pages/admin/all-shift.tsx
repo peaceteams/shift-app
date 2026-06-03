@@ -105,7 +105,13 @@ export default function AllShiftPage() {
 
     const end = endDate
     ? endDate
-    : `${today.getFullYear()}-${String(today.getMonth() + 2).padStart(2, "0")}-01`;
+    : (() => {
+        const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const yyyy = last.getFullYear();
+        const mm = String(last.getMonth() + 1).padStart(2, "0");
+        const dd = String(last.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+    })();
 
     const dates: string[] = [];
     let current = start;
