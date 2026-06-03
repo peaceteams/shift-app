@@ -53,23 +53,31 @@ export default function AllShiftPage() {
     const [endDate, setEndDate] = useState("");
 
     useEffect(() => {
-    load(); // 初回ロード & 期間変更時にもロード
-
-    const channel = supabase
-        .channel("shift-rt")
-        .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "shift_requests" },
-        () => {
-            load(); // リアルタイム更新
+        async function run() {
+            await load();      // データ読み込み
+            adjustScale();     // 読み込み後に縮小処理
         }
-        )
-        .subscribe();
 
-    return () => {
-        supabase.removeChannel(channel);
-    };
-    }, [startDate, endDate]); // ← 期間が変わったら自動で再ロード
+        run();
+
+        const channel = supabase
+            .channel("shift-rt")
+            .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "shift_requests" },
+            () => {
+                run(); // リアルタイム更新時も縮小し直す
+            }
+            )
+            .subscribe();
+
+        window.addEventListener("resize", adjustScale);
+
+        return () => {
+            supabase.removeChannel(channel);
+            window.removeEventListener("resize", adjustScale);
+        };
+    }, [startDate, endDate]); // ← 期間変更時にも縮小し直す
 
     async function load() {
         // プロフィールは全取得でOK
@@ -114,6 +122,21 @@ export default function AllShiftPage() {
         d.setDate(d.getDate() + 1);
     }
 
+    function adjustScale() {
+        const wrapper = document.getElementById("table-wrapper");
+        const scaleBox = document.getElementById("table-scale");
+
+        if (!wrapper || !scaleBox) return;
+
+        const wrapperWidth = wrapper.clientWidth;
+        const tableWidth = scaleBox.scrollWidth;
+
+        const scale = Math.min(1, wrapperWidth / tableWidth);
+
+        scaleBox.style.transform = `scale(${scale})`;
+    }
+
+
     return (
         <div style={{ padding: 20 }}>
             <h1>全メンバーのシフト一覧</h1>
@@ -150,7 +173,7 @@ export default function AllShiftPage() {
                     display: "inline-block",
                     }}
                 >
-
+                    
                     <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", width: "100%", }}>
                         <colgroup>
                             <col style={{ width: "100px" }} />  {/* 名前 */}
