@@ -99,27 +99,28 @@ export default function AllShiftPage() {
     // 今月1日〜2か月後の月末までの日付一覧を作る
     const today = new Date();
 
-    // startDate と endDate が指定されている場合はそれを使う
     const start = startDate
-    ? new Date(startDate)
-    : new Date(today.getFullYear(), today.getMonth(), 1);
+    ? startDate
+    : `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
 
     const end = endDate
-    ? new Date(endDate)
-    : new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    ? endDate
+    : `${today.getFullYear()}-${String(today.getMonth() + 2).padStart(2, "0")}-01`;
 
-    // start〜end の全日付を生成
     const dates: string[] = [];
-    let d = new Date(start);
+    let current = start;
 
-    while (d <= end) {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
+    while (current <= end) {
+    dates.push(current);
 
-        dates.push(`${yyyy}-${mm}-${dd}`); // ← これで絶対にズレない
+    const d = new Date(current);
+    d.setDate(d.getDate() + 1);
 
-        d.setDate(d.getDate() + 1);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+
+    current = `${yyyy}-${mm}-${dd}`;
     }
 
     function adjustScale() {
