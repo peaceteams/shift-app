@@ -235,17 +235,50 @@ export default function ShiftSubmitPage() {
                     <div style={{ background: "white", padding: 20, borderRadius: 8, pointerEvents: saving || deleting ? "none" : "auto" }}>
                         <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
 
-                        <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                            <select value={startHour} onChange={(e) => setStartHour(e.target.value)}>
+                        <div
+                        style={{
+                            display: "flex",
+                            gap: 20,
+                            marginBottom: 20,
+                            justifyContent: "center", // ← 中央寄せ
+                        }}
+                        >
+                            <select
+                                value={startHour}
+                                onChange={(e) => setStartHour(e.target.value)}
+                                style={{
+                                fontSize: "20px",
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                width: "100px",
+                                textAlign: "center",
+                                }}
+                            >
                                 {Array.from({ length: 24 }).map((_, h) => {
-                                    const hh = String(h).padStart(2, "0");
-                                    return <option key={hh} value={hh}>{hh}</option>;
+                                const hh = String(h).padStart(2, "0");
+                                return (
+                                    <option key={hh} value={hh}>
+                                    {hh}
+                                    </option>
+                                );
                                 })}
                             </select>
 
-                            <select value={startMin} onChange={(e) => setStartMin(e.target.value)}>
+                            <select
+                                value={startMin}
+                                onChange={(e) => setStartMin(e.target.value)}
+                                style={{
+                                fontSize: "20px",
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                width: "100px",
+                                textAlign: "center",
+                                }}
+                            >
                                 {["00", "15", "30", "45"].map((m) => (
-                                    <option key={m} value={m}>{m}</option>
+                                <option key={m} value={m}>
+                                    {m}
+                                </option>
                                 ))}
                             </select>
                         </div>
