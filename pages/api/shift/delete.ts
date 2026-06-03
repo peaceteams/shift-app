@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // 1. user_session から user_id（＝ profiles.id）を取得
   const { data: session, error: sessionError } = await supabase
-    .from("user_session")
+    .from("user_sessions")
     .select("user_id")
     .eq("token", token)
     .single();
