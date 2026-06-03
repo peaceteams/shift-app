@@ -9,36 +9,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Cookie から token を取得
   const cookies = parse(req.headers.cookie || "");
-  const token = cookies.user_session;
+  const token = cookies.token;
 
   if (!token) {
     return res.status(401).json({ error: "No token" });
   }
 
-  // Supabase (service_role)
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // token → profiles.id を取得
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id")
+  // 1. user_session から user_id（＝ profiles.id）を取得
+  const { data: session, error: sessionError } = await supabase
+    .from("user_session")
+    .select("user_id")
     .eq("token", token)
     .single();
 
-  if (profileError || !profile) {
+  if (sessionError || !session) {
     return res.status(401).json({ error: "Invalid token" });
   }
 
+  const userId = session.user_id;
+
+  // 2. 削除処理
   const { date } = req.body;
 
-  // 削除
   const { error } = await supabase
     .from("shift_requests")
     .delete()
-    .eq("user_id", profile.id)
+    .eq("user_id", userId)
     .eq("date", date);
 
   if (error) {
