@@ -163,14 +163,16 @@ export default function AllShiftPage() {
                 id="table-wrapper"
                 style={{
                     width: "100%",
-                    overflow: "hidden",
+                    overflowX: "hidden",
+                    overflowY: "auto",
+                    maxHeight: "80vh", 
                 }}>
 
                 <div
                     id="table-scale"
                     style={{
-                    transformOrigin: "top left",
-                    display: "inline-block",
+                        transformOrigin: "top left",
+                        display: "inline-block",
                     }}
                 >
                     
