@@ -80,7 +80,7 @@ export default function ShiftSubmitPage() {
         const start = `${startHour}:${startMin}`;
         const end = `${endHour}:${endMin}`;
 
-        const key = selectedDate.toISOString().split("T")[0];
+        const key = selectedDate.toLocaleDateString("sv-SE");
         const startDate = new Date(`2000-01-01T${start}`);
         const endDate = new Date(`2000-01-01T${end}`);
 

@@ -24,15 +24,6 @@ function formatTime(t?: string) {
     return t.slice(0, 5); // "HH:MM"
 }
 
-function addOneDay(dateStr: string) {
-    const d = new Date(dateStr);
-    d.setDate(d.getDate() + 1);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-}
-
 export default function AllShiftPage() {
     type User = {
         id: string;
@@ -200,7 +191,7 @@ export default function AllShiftPage() {
                                 <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
                                 {dates.map((d) => {
                                     const shift = shifts.find(
-                                        (s) => s.user_id === u.id && addOneDay(s.date) === d
+                                        (s) => s.user_id === u.id && s.date === d
                                     );
                                     return (
                                     <td
