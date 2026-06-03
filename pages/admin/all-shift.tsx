@@ -53,23 +53,23 @@ export default function AllShiftPage() {
     const [endDate, setEndDate] = useState("");
 
     useEffect(() => {
-        load();
+    load(); // 初回ロード & 期間変更時にもロード
 
-        const channel = supabase
-            .channel("shift-rt")
-            .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "shift_requests" },
-            () => {
-                load();
-            }
-            )
-            .subscribe();
+    const channel = supabase
+        .channel("shift-rt")
+        .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shift_requests" },
+        () => {
+            load(); // リアルタイム更新
+        }
+        )
+        .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
+    return () => {
+        supabase.removeChannel(channel);
+    };
+    }, [startDate, endDate]); // ← 期間が変わったら自動で再ロード
 
     async function load() {
         // プロフィールは全取得でOK
@@ -134,64 +134,70 @@ export default function AllShiftPage() {
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                 />
-
-                <button
-                    onClick={load}
-                    style={{ marginLeft: 10, padding: "4px 10px" }}
-                >
-                    表示
-                </button>
             </div>
 
-            <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", width: "100%", }}>
-                <colgroup>
-                    <col style={{ width: "100px" }} />  {/* 名前 */}
-                    <col style={{ width: "100px" }} />   {/* ユーザーID */}
-                    {dates.map(() => (
-                        <col key={crypto.randomUUID()} style={{ width: "100px" }} />  // 日付列
-                    ))}
-                </colgroup>
+            <div
+                id="table-wrapper"
+                style={{
+                    width: "100%",
+                    overflow: "hidden",
+                }}>
 
-                <thead>
-                    <tr>
-                        <th>名前</th>
-                        <th>ユーザーID（番号）</th>
-                        {dates.map((d) => (
-                            <th key={d}>{d.slice(5)}</th>
-                        ))}
-                    </tr>
-                </thead>
+                <div
+                    id="table-scale"
+                    style={{
+                    transformOrigin: "top left",
+                    display: "inline-block",
+                    }}
+                >
 
-                <tbody>
-                    {users.map((u) => (
-                        <tr key={u.id}>
-                        <td style={{ textAlign: "center", padding: 4 }}>{u.name}</td>
-                        <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
-
-                        {dates.map((d) => {
-                            const shift = shifts.find(
-                                (s) => s.user_id === u.id && addOneDay(s.date) === d
-                            );
-
-                            return (
-                            <td 
-                                key={d}
-                                style={{
-                                    textAlign: "center",
-                                    padding: 4
-                                }}
-                            >
-                                <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
-                                    <span>{shift ? formatTime(shift.start_time) : "–"}</span>
-                                    <span>{shift ? formatTime(shift.end_time) : "–"}</span>
-                                </div>
-                            </td>
-                            );
-                        })}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                    <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", width: "100%", }}>
+                        <colgroup>
+                            <col style={{ width: "100px" }} />  {/* 名前 */}
+                            <col style={{ width: "100px" }} />   {/* ユーザーID */}
+                            {dates.map(() => (
+                                <col key={crypto.randomUUID()} style={{ width: "100px" }} />  // 日付列
+                            ))}
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>名前</th>
+                                <th>ユーザーID（番号）</th>
+                                {dates.map((d) => (
+                                    <th key={d}>{d.slice(5)}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map((u) => (
+                                <tr key={u.id}>
+                                <td style={{ textAlign: "center", padding: 4 }}>{u.name}</td>
+                                <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
+                                {dates.map((d) => {
+                                    const shift = shifts.find(
+                                        (s) => s.user_id === u.id && addOneDay(s.date) === d
+                                    );
+                                    return (
+                                    <td
+                                        key={d}
+                                        style={{
+                                            textAlign: "center",
+                                            padding: 4
+                                        }}
+                                    >
+                                        <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
+                                            <span>{shift ? formatTime(shift.start_time) : "–"}</span>
+                                            <span>{shift ? formatTime(shift.end_time) : "–"}</span>
+                                        </div>
+                                    </td>
+                                    );
+                                })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <a
                 href="./dashboard"
