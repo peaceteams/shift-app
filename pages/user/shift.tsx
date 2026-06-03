@@ -42,7 +42,7 @@ export default function ShiftSubmitPage() {
     useEffect(() => {
         setMounted(true);
         async function loadUser() {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem("user_session");
             if (!token) return;
 
             const { data: profile, error } = await supabase
