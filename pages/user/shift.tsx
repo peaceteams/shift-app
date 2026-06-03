@@ -41,28 +41,6 @@ export default function ShiftSubmitPage() {
 
     useEffect(() => {
         setMounted(true);
-
-        async function loadUser() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                console.log("ログインしていません");
-            return;
-            }
-
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { data: profiles, error } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("id", user.id)
-                .single();
-
-            if (error) console.error(error);
-            setProfile(profiles);
-        }
-
-        loadUser();
         fetchShiftsFromDB();
     }, []);
 
@@ -87,26 +65,6 @@ export default function ShiftSubmitPage() {
         setShifts(formatted);
         }
         setLoading(false);
-    }
-
-    async function deleteShift() {
-        if (!selectedDate || !profile) return;
-
-        const key = selectedDate.toISOString().split("T")[0];
-
-        await supabase
-            .from("shift_requests")
-            .delete()
-            .eq("user_id", profile.user_id) // ← これが正しい
-            .eq("date", key);
-
-        setShifts((prev) => {
-            const copy = { ...prev };
-            delete copy[key];
-            return copy;
-        });
-
-        setSelectedDate(null);
     }
 
     function openModal(date: Date) {
@@ -160,6 +118,39 @@ export default function ShiftSubmitPage() {
 
         setSelectedDate(null);
     }
+
+    async function deleteShift() {
+        if (!selectedDate) return;
+        setDeleting(true);
+
+        const session = JSON.parse(localStorage.getItem("user_session")!);
+        const userId = session.user_id;
+
+        const key = selectedDate.toISOString().split("T")[0];
+
+        const res = await fetch("/api/shift/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ date: key, user_id: userId }),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+            alert(json.error ?? "削除に失敗しました");
+            return;
+        }
+
+        setShifts((prev) => {
+            const copy = { ...prev };
+            delete copy[key];
+            return copy;
+        });
+
+        setDeleting(false);
+        setSelectedDate(null);
+    }
+
     if(mounted){
         return (
             <div style={{ padding: 20 }}>
