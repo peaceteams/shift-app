@@ -200,7 +200,7 @@ export default function AllShiftPage() {
                                 <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
                                 {dates.map((d) => {
                                     const shift = shifts.find(
-                                        (s) => s.user_id === u.id && addOneDay(s.date) === d
+                                        (s) => s.user_id === u.id && s.date === d
                                     );
                                     return (
                                     <td
