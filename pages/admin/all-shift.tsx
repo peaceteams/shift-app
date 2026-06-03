@@ -24,12 +24,14 @@ function formatTime(t?: string) {
     return t.slice(0, 5); // "HH:MM"
 }
 
-function addOneDay(dateStr: string) {
-    const d = new Date(dateStr);
+function addDayStr(dateStr: string) {
+    const d = new Date(dateStr + "T00:00:00"); // ← JST固定
     d.setDate(d.getDate() + 1);
+
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
+
     return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -113,20 +115,20 @@ export default function AllShiftPage() {
         return `${yyyy}-${mm}-${dd}`;
     })();
 
-    const dates: string[] = [];
+const dates: string[] = [];
     let current = start;
 
     while (current <= end) {
-    dates.push(current);
+        dates.push(current);
+        current = addDayStr(current); // ← ここが重要
+        const d = new Date(current);
+        d.setDate(d.getDate() + 1);
 
-    const d = new Date(current);
-    d.setDate(d.getDate() + 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
 
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-
-    current = `${yyyy}-${mm}-${dd}`;
+        current = `${yyyy}-${mm}-${dd}`;
     }
 
     function adjustScale() {
