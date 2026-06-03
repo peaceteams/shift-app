@@ -41,6 +41,25 @@ export default function ShiftSubmitPage() {
 
     useEffect(() => {
         setMounted(true);
+        async function loadUser() {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            const { data: profile, error } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("token", token)
+                .single();
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            setProfile(profile);
+        }
+
+        loadUser();
         fetchShiftsFromDB();
     }, []);
 
@@ -120,24 +139,25 @@ export default function ShiftSubmitPage() {
     }
 
     async function deleteShift() {
-        if (!selectedDate) return;
+        if (!selectedDate || !profile) return;
         setDeleting(true);
-
-        const session = JSON.parse(localStorage.getItem("user_session")!);
-        const userId = session.user_id;
 
         const key = selectedDate.toISOString().split("T")[0];
 
         const res = await fetch("/api/shift/delete", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ date: key, user_id: userId }),
+            body: JSON.stringify({
+            date: key,
+            user_id: profile.id,
+            }),
         });
 
         const json = await res.json();
 
         if (!res.ok) {
             alert(json.error ?? "削除に失敗しました");
+            setDeleting(false);    
             return;
         }
 
