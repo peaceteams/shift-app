@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+// pages/api/shift/delete.ts
+import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 
-export async function POST(req: Request) {
-  const { date, user_id } = await req.json();
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const { date, user_id } = req.body;
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // ← 重要
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
   const { error } = await supabase
@@ -16,8 +21,8 @@ export async function POST(req: Request) {
     .eq("date", date);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return res.status(400).json({ error: error.message });
   }
 
-  return NextResponse.json({ ok: true });
+  return res.status(200).json({ ok: true });
 }
