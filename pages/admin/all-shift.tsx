@@ -24,14 +24,12 @@ function formatTime(t?: string) {
     return t.slice(0, 5); // "HH:MM"
 }
 
-function addDayStr(dateStr: string) {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    const date = new Date(y, m - 1, d + 1); // ← ここだけ Date を使う（安全）
-
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-
+function addOneDay(dateStr: string) {
+    const d = new Date(dateStr);
+    d.setDate(d.getDate() + 1);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -98,29 +96,30 @@ export default function AllShiftPage() {
         setShifts(shiftRequests || []);
     }
 
-    // 日付一覧を作る
+    // 今月1日〜2か月後の月末までの日付一覧を作る
     const today = new Date();
 
+    // startDate と endDate が指定されている場合はそれを使う
     const start = startDate
-    ? startDate
-    : `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
+    ? new Date(startDate)
+    : new Date(today.getFullYear(), today.getMonth(), 1);
 
     const end = endDate
-    ? endDate
-    : (() => {
-        const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        const yyyy = last.getFullYear();
-        const mm = String(last.getMonth() + 1).padStart(2, "0");
-        const dd = String(last.getDate()).padStart(2, "0");
-        return `${yyyy}-${mm}-${dd}`;
-    })();
+    ? new Date(endDate)
+    : new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
+    // start〜end の全日付を生成
     const dates: string[] = [];
-    let current = start;
+    let d = new Date(start);
 
-    while (current <= end) {
-        dates.push(current);
-        current = addDayStr(current); // ← これだけ
+    while (d <= end) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+
+        dates.push(`${yyyy}-${mm}-${dd}`); // ← これで絶対にズレない
+
+        d.setDate(d.getDate() + 1);
     }
 
     function adjustScale() {
@@ -201,7 +200,7 @@ export default function AllShiftPage() {
                                 <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
                                 {dates.map((d) => {
                                     const shift = shifts.find(
-                                        (s) => s.user_id === u.id && s.date === d
+                                        (s) => s.user_id === u.id && addOneDay(s.date) === d
                                     );
                                     return (
                                     <td
