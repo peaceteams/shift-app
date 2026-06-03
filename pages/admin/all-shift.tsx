@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase/client";
 import { requireAdmin } from "@/lib/auth/adminAuth";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
@@ -18,11 +18,6 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     },
   };
 };
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 function formatTime(t?: string) {
   if (!t) return "–";

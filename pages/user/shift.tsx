@@ -42,18 +42,25 @@ export default function ShiftSubmitPage() {
     useEffect(() => {
         setMounted(true);
 
-    async function loadUser() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        async function loadUser() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                console.log("ログインしていません");
+            return;
+            }
 
-        const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
 
-        setProfile(profiles);
-    }
+            const { data: profiles, error } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", user.id)
+                .single();
+
+            if (error) console.error(error);
+            setProfile(profiles);
+        }
 
         loadUser();
         fetchShiftsFromDB();
