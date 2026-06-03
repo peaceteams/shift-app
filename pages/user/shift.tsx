@@ -236,31 +236,31 @@ export default function ShiftSubmitPage() {
                         <h3>{selectedDate.toLocaleDateString()} のシフト</h3>
 
                         <div
-                        style={{
-                            display: "flex",
-                            gap: 20,
-                            marginBottom: 20,
-                            justifyContent: "center", // ← 中央寄せ
-                        }}
+                            style={{
+                                display: "flex",
+                                gap: 20,
+                                marginBottom: 20,
+                                justifyContent: "center", // ← 中央寄せ
+                            }}
                         >
                             <select
                                 value={startHour}
                                 onChange={(e) => setStartHour(e.target.value)}
                                 style={{
-                                fontSize: "20px",
-                                padding: "10px 14px",
-                                borderRadius: "8px",
-                                width: "100px",
-                                textAlign: "center",
+                                    fontSize: "20px",
+                                    padding: "10px 14px",
+                                    borderRadius: "8px",
+                                    width: "100px",
+                                    textAlign: "center",
                                 }}
                             >
                                 {Array.from({ length: 24 }).map((_, h) => {
-                                const hh = String(h).padStart(2, "0");
-                                return (
-                                    <option key={hh} value={hh}>
-                                    {hh}
-                                    </option>
-                                );
+                                    const hh = String(h).padStart(2, "0");
+                                    return (
+                                        <option key={hh} value={hh}>
+                                        {hh}
+                                        </option>
+                                    );
                                 })}
                             </select>
 
@@ -283,6 +283,53 @@ export default function ShiftSubmitPage() {
                             </select>
                         </div>
 
+                        <div
+                            style={{
+                                display: "flex",
+                                gap: 20,
+                                marginBottom: 20,
+                                justifyContent: "center", // ← 中央寄せ
+                            }}
+                        >
+                            <select
+                                value={endHour}
+                                onChange={(e) => setEndHour(e.target.value)}
+                                style={{
+                                    fontSize: "20px",
+                                    padding: "10px 14px",
+                                    borderRadius: "8px",
+                                    width: "100px",
+                                    textAlign: "center",
+                                }}
+                            >
+                                {Array.from({ length: 24 }).map((_, h) => {
+                                    const hh = String(h).padStart(2, "0");
+                                    return (
+                                        <option key={hh} value={hh}>
+                                        {hh}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+
+                            <select
+                                value={endMin}
+                                onChange={(e) => setEndMin(e.target.value)}
+                                style={{
+                                fontSize: "20px",
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                width: "100px",
+                                textAlign: "center",
+                                }}
+                            >
+                                {["00", "15", "30", "45"].map((m) => (
+                                <option key={m} value={m}>
+                                    {m}
+                                </option>
+                                ))}
+                            </select>
+                        </div>
                         <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
 
                         <button
