@@ -283,21 +283,6 @@ export default function ShiftSubmitPage() {
                             </select>
                         </div>
 
-                        <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                            <select value={endHour} onChange={(e) => setEndHour(e.target.value)}>
-                                {Array.from({ length: 24 }).map((_, h) => {
-                                const hh = String(h).padStart(2, "0");
-                                return <option key={hh} value={hh}>{hh}</option>;
-                                })}
-                            </select>
-
-                            <select value={endMin} onChange={(e) => setEndMin(e.target.value)}>
-                                {["00", "15", "30", "45"].map((m) => (
-                                <option key={m} value={m}>{m}</option>
-                                ))}
-                            </select>
-                        </div>
-
                         <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
 
                         <button
