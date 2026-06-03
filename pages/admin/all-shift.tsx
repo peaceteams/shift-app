@@ -98,7 +98,7 @@ export default function AllShiftPage() {
         setShifts(shiftRequests || []);
     }
 
-    // 今月1日〜2か月後の月末までの日付一覧を作る
+    // 日付一覧を作る
     const today = new Date();
 
     const start = startDate
@@ -115,22 +115,14 @@ export default function AllShiftPage() {
         return `${yyyy}-${mm}-${dd}`;
     })();
 
-const dates: string[] = [];
+    const dates: string[] = [];
     let current = start;
 
     while (current <= end) {
         dates.push(current);
-        current = addDayStr(current); // ← ここが重要
-        const d = new Date(current);
-        d.setDate(d.getDate() + 1);
-
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
-
-        current = `${yyyy}-${mm}-${dd}`;
+        current = addDayStr(current); // ← これだけ
     }
-
+    
     function adjustScale() {
         const wrapper = document.getElementById("table-wrapper");
         const scaleBox = document.getElementById("table-scale");
