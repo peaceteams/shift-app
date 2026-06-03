@@ -43,6 +43,7 @@ export default function ShiftSubmitPage() {
         setMounted(true);
         async function loadUser() {
             const token = localStorage.getItem("user_session");
+            console.log(token);
             if (!token) return;
 
             const { data: profile, error } = await supabase
