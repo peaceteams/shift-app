@@ -68,7 +68,7 @@ export default function ShiftSubmitPage() {
     }
 
     function openModal(date: Date) {
-        const key = date.toISOString().split("T")[0];
+        const key = date.toLocaleDateString("sv-SE");
         setSelectedDate(date);
         setStart(shifts[key]?.start ?? "");
         setEnd(shifts[key]?.end ?? "");
@@ -123,7 +123,7 @@ export default function ShiftSubmitPage() {
         if (!selectedDate) return;
         setDeleting(true);
 
-        const key = selectedDate.toISOString().split("T")[0];
+        const key = selectedDate.toLocaleDateString("sv-SE"); // ← 修正
 
         const res = await fetch("/api/shift/delete", {
             method: "POST",
