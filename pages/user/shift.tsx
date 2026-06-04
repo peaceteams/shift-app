@@ -183,7 +183,7 @@ export default function ShiftSubmitPage() {
                         if (loading) {
                             return <div style={{ height: "32px" }}></div>; // ← 空の高さだけ
                         }
-                        const key = date.toISOString().split("T")[0];
+                        const key = date.toLocaleDateString("sv-SE");
                         const shift = shifts[key];
                         const start = shift?.start ?? null;
                         const end = shift?.end ?? null;
