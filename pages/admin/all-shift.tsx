@@ -219,7 +219,7 @@ export default function AllShiftPage() {
                 href="./dashboard"
                 style={{
                     position: "fixed",
-                    bottom: "20px",
+                    top: "20px",
                     right: "20px",
                     background: "#0070f3",
                     color: "white",
