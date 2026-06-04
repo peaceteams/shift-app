@@ -87,16 +87,16 @@ export default function AllShiftPage() {
         setShifts(shiftRequests || []);
     }
 
-    // 今月1日〜2か月後の月末までの日付一覧を作る
+    // 日付一覧を作る
     const today = new Date();
 
     // startDate と endDate が指定されている場合はそれを使う
     const start = startDate
-    ? new Date(startDate)
+    ? new Date(startDate + "T00:00:00")
     : new Date(today.getFullYear(), today.getMonth(), 1);
 
     const end = endDate
-    ? new Date(endDate)
+    ? new Date(endDate + "T00:00:00")
     : new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
     // start〜end の全日付を生成
@@ -108,7 +108,7 @@ export default function AllShiftPage() {
         const mm = String(d.getMonth() + 1).padStart(2, "0");
         const dd = String(d.getDate()).padStart(2, "0");
 
-        dates.push(`${yyyy}-${mm}-${dd}`); // ← これで絶対にズレない
+        dates.push(`${yyyy}-${mm}-${dd}`);
 
         d.setDate(d.getDate() + 1);
     }
