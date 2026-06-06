@@ -1,7 +1,23 @@
 import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { supabase } from "@/lib/supabase/client";
+import { GetServerSidePropsContext } from "next";
+import { requireUser } from "@/lib/auth/page/userAuth";
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+    const auth = await requireUser(ctx);
+
+    if (!auth.ok) {
+        return auth.redirect;
+    }
+
+    return {
+        props: {
+            user: auth.user,
+        },
+    };
+}
+
 
 // 秒を消す
 function trimSeconds(time: string) {
@@ -18,7 +34,14 @@ export default function ShiftSubmitPage() {
     const [end, setEnd] = useState("");
 
     // 全シフト
-    const [shifts, setShifts] = useState<Record<string, { start: string; end: string }>>({});
+    type ShiftData = {
+        start: string | null;
+        end: string | null;
+        is_confirmed?: boolean;
+        is_holiday?: boolean;
+    };
+
+    const [shifts, setShifts] = useState<Record<string, ShiftData>>({});
 
     // ロード関係
     const [loading, setLoading] = useState(true);
@@ -49,20 +72,21 @@ export default function ShiftSubmitPage() {
         const json = await res.json();
 
         if (res.ok) {
-        const formatted = Object.fromEntries(
-            Object.entries(json.shifts).map(([date, v]) => {
-            const val = v as { start: string; end: string };
-            return [
-                date,
-                {
-                    start: trimSeconds(val.start),
-                    end: trimSeconds(val.end),
-                },
-            ];
-            })
-        );
-
-        setShifts(formatted);
+            const formatted = Object.fromEntries(
+                Object.entries(json.shifts).map(([date, v]) => {
+                    const val = v as any;
+                    return [
+                        date,
+                        {
+                            start: trimSeconds(val.start),
+                            end: trimSeconds(val.end),
+                            is_confirmed: val.is_confirmed ?? false,
+                            is_holiday: val.is_holiday ?? false,
+                        },
+                    ];
+                })
+            );
+            setShifts(formatted);
         }
         setLoading(false);
     }
@@ -93,8 +117,8 @@ export default function ShiftSubmitPage() {
 
         // ローカル更新
         setShifts((prev) => ({
-        ...prev,
-        [key]: { start, end },
+            ...prev,
+            [key]: { start, end },
         }));
 
         // API 保存
@@ -173,9 +197,13 @@ export default function ShiftSubmitPage() {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
 
+                        const key = date.toLocaleDateString("sv-SE");
+                        const shift = shifts[key];
+
                         return (
-                            loading ||        // ← ロード中は無効
-                            date < today      // ← 過去日は無効
+                            loading ||  // ← ロード中は無効
+                            date < today || // ← 過去日は無効
+                            shift?.is_confirmed === true
                         );
                     }}
                     tileContent={({ date, view }) => {

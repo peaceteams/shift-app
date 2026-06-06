@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
 import { supabase } from "@/lib/supabase/client";
-import { requireAdmin } from "@/lib/auth/adminAuth";
+import { requireAdmin } from "@/lib/auth/page/adminAuth";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     const auth = await requireAdmin(ctx);
@@ -36,6 +36,8 @@ export default function AllShiftPage() {
         date: string;
         start_time: string;
         end_time: string;
+        is_confirmed: boolean;
+        is_holiday: boolean;
     };
 
     const [users, setUsers] = useState<User[]>([]);
@@ -127,6 +129,55 @@ export default function AllShiftPage() {
         scaleBox.style.transform = `scale(${scale})`;
     }
 
+    async function confirmUserPeriod(userId: string) {
+        if (!startDate || !endDate) {
+            alert("期間を指定してください");
+            return;
+        }
+
+        const res = await fetch("/api/shift/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: userId,
+                start: startDate,
+                end: endDate,
+            }),
+        });
+
+        if (!res.ok) {
+            alert("確定に失敗しました");
+            return;
+        }
+
+        alert("確定しました");
+        load();
+    }
+
+    async function unconfirmUserPeriod(userId: string) {
+        if (!startDate || !endDate) {
+            alert("期間を指定してください");
+            return;
+        }
+
+        const res = await fetch("/api/shift/unconfirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: userId,
+                start: startDate,
+                end: endDate,
+            }),
+        });
+
+        if (!res.ok) {
+            alert("解除に失敗しました");
+            return;
+        }
+
+        alert("確定解除しました");
+        load();
+    }
 
     return (
         <div style={{ padding: 20 }}>
@@ -189,6 +240,33 @@ export default function AllShiftPage() {
                                 <tr key={u.id}>
                                 <td style={{ textAlign: "center", padding: 4 }}>{u.name}</td>
                                 <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
+                                <td style={{ textAlign: "center" }}>
+                                    <button
+                                        onClick={() => confirmUserPeriod(u.id)}
+                                        style={{
+                                            marginRight: 6,
+                                            padding: "4px 8px",
+                                            background: "#0070f3",
+                                            color: "white",
+                                            borderRadius: 4,
+                                        }}
+                                    >
+                                        確定
+                                    </button>
+
+                                    <button
+                                        onClick={() => unconfirmUserPeriod(u.id)}
+                                        style={{
+                                            padding: "4px 8px",
+                                            background: "red",
+                                            color: "white",
+                                            borderRadius: 4,
+                                        }}
+                                    >
+                                        解除
+                                    </button>
+                                </td>
+
                                 {dates.map((d) => {
                                     const shift = shifts.find(
                                         (s) => s.user_id === u.id && s.date === d
@@ -198,12 +276,26 @@ export default function AllShiftPage() {
                                         key={d}
                                         style={{
                                             textAlign: "center",
-                                            padding: 4
+                                            padding: 4,
+                                            background: shift?.is_confirmed ? "#d0e7ff" : "white"
                                         }}
                                     >
                                         <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
-                                            <span>{shift ? formatTime(shift.start_time) : "–"}</span>
-                                            <span>{shift ? formatTime(shift.end_time) : "–"}</span>
+                                            {shift ? (
+                                                shift.is_holiday ? (
+                                                    <div style={{ color: "red", fontWeight: "bold" }}>休み希望</div>
+                                                ) : (
+                                                    <>
+                                                        <span>{formatTime(shift.start_time)}</span>
+                                                        <span>{formatTime(shift.end_time)}</span>
+                                                    </>
+                                                )
+                                            ) : (
+                                                <>
+                                                    <span>–</span>
+                                                    <span>–</span>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                     );
