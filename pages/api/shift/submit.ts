@@ -81,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       date,
       start_time: start,
       end_time: end,
-      is_holiday: is_holiday ?? false,
+      is_holiday: is_holiday === true,
     });
 
     const { error: insertError } = await supabaseAdmin
@@ -91,6 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         date,
         start_time: start,
         end_time: end,
+        is_holiday: is_holiday === true,
       });
 
     console.log("insertError:", insertError);

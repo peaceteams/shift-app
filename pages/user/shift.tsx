@@ -132,24 +132,18 @@ export default function ShiftSubmitPage() {
         // ローカル更新
         setShifts((prev) => ({
             ...prev,
-            [key]: {
-                ...prev[key],   // ← これが重要
-                start,
-                end,
-                is_holiday: false, // 保存したら休み希望は解除
-            },
+            [key]: { start, end },
         }));
 
         // API 保存
         const res = await fetch("/api/shift/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            date: key,
-            start,
-            end,
-            is_holiday: false,
-        }),
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                date: key,
+                start,
+                end,
+            }),
         });
 
         const json = await res.json();
@@ -444,7 +438,7 @@ export default function ShiftSubmitPage() {
                         </div>
                         <button onClick={markHoliday}>{saving ? "保存中..." : "休み希望"}</button>
 
-                        <button onClick={saveShift} style={{ marginLeft: 10, color: "red" }}>{saving ? "保存中..." : "保存"}</button>
+                        <button onClick={saveShift} style={{ marginLeft: 10 }}>{saving ? "保存中..." : "保存"}</button>
 
                         <button onClick={deleteShift} style={{ marginLeft: 10, color: "red" }}>{deleting ? "削除中..." : "削除"}</button>
 
