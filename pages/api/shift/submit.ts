@@ -52,8 +52,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("▶ Authenticated user id:", userId);
 
     // リクエスト body
-    const { date, start, end } = req.body;
-    console.log("▶ Request body:", { date, start, end });
+    const { date, start, end, is_holiday } = req.body;
+    console.log("▶ Request body:", { date, start, end, is_holiday });
 
     if (!date) {
       console.log("❌ date is missing");
@@ -81,6 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       date,
       start_time: start,
       end_time: end,
+      is_holiday: is_holiday ?? false,
     });
 
     const { error: insertError } = await supabaseAdmin
