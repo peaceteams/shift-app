@@ -277,7 +277,7 @@ export default function ShiftSubmitPage() {
                                 <div
                                     style={{
                                         height: "32px",
-                                        fontSize: 10,
+                                        fontSize: 8,
                                         color: "red",
                                         fontWeight: "bold",
                                         display: "flex",
