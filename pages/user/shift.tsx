@@ -59,9 +59,6 @@ export default function ShiftSubmitPage() {
     const [endHour, setEndHour] = useState("00");
     const [endMin, setEndMin] = useState("00");
 
-    // ユーザー情報
-    const [profile, setProfile] = useState<any>(null);
-
     useEffect(() => {
         setMounted(true);
         fetchShiftsFromDB();
