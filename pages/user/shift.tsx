@@ -436,19 +436,7 @@ export default function ShiftSubmitPage() {
                                 ))}
                             </select>
                         </div>
-                        <button
-                            onClick={markHoliday}
-                            style={{
-                                marginLeft: 10,
-                                background: "orange",
-                                color: "white",
-                                padding: "6px 12px",
-                                borderRadius: "6px",
-                            }}
-                        >
-                            {saving ? "保存中..." : "休み希望"}
-                        </button>
-
+                        <button onClick={markHoliday}>{saving ? "保存中..." : "休み希望"}</button>
 
                         <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
 
