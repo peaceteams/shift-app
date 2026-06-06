@@ -222,7 +222,7 @@ export default function AllShiftPage() {
                         <colgroup>
                             <col style={{ width: "100px" }} />  {/* 名前 */}
                             <col style={{ width: "100px" }} />   {/* ユーザーID */}
-                            <col style={{ width: "100px" }} />   {/* ユーザーID */}
+                            <col style={{ width: "150px" }} />   {/* 確定・解除ボタン */}
                             {dates.map(() => (
                                 <col key={crypto.randomUUID()} style={{ width: "100px" }} />  // 日付列
                             ))}
@@ -231,7 +231,7 @@ export default function AllShiftPage() {
                             <tr>
                                 <th>名前</th>
                                 <th>ユーザーID（番号）</th>
-                                <th>日程確定・解除ボタン</th>
+                                <th>確定・解除ボタン</th>
                                 {dates.map((d) => (
                                     <th key={d}>{d.slice(5)}</th>
                                 ))}
