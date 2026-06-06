@@ -3,6 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { GetServerSidePropsContext } from "next";
 import { requireUser } from "@/lib/auth/page/userAuth";
+import { supabase } from "@/lib/supabase/client";
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     const auth = await requireUser(ctx);
@@ -62,6 +63,22 @@ export default function ShiftSubmitPage() {
     useEffect(() => {
         setMounted(true);
         fetchShiftsFromDB();
+
+        // ★ Realtime 購読
+        const channel = supabase
+            .channel("shift-rt-user")
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "shift_requests" },
+                () => {
+                    fetchShiftsFromDB(); // ← 変更があれば即再取得
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     async function fetchShiftsFromDB() {
@@ -170,6 +187,48 @@ export default function ShiftSubmitPage() {
         setSelectedDate(null);
     }
 
+    async function markHoliday() {
+        if (!selectedDate) return;
+
+        const key = selectedDate.toLocaleDateString("sv-SE");
+
+        setSaving(true);
+
+        // ローカル更新
+        setShifts((prev) => ({
+            ...prev,
+            [key]: {
+                start: null,
+                end: null,
+                is_holiday: true,
+                is_confirmed: prev[key]?.is_confirmed ?? false,
+            },
+        }));
+
+        // API 保存
+        const res = await fetch("/api/shift/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                date: key,
+                start: null,
+                end: null,
+                is_holiday: true,
+            }),
+        });
+
+        const json = await res.json();
+        setSaving(false);
+
+        if (!res.ok) {
+            alert(json.error ?? "休み希望の保存に失敗しました");
+            return;
+        }
+
+        setSelectedDate(null);
+    }
+
+
     if(mounted){
         return (
             <div style={{ padding: 20 }}>
@@ -210,7 +269,24 @@ export default function ShiftSubmitPage() {
                         }
                         const key = date.toLocaleDateString("sv-SE");
                         const shift = shifts[key];
-                        const start = shift?.start ?? null;
+                        const start = shift?.start ?? null
+                        if (shift.is_holiday) {
+                            return (
+                                <div
+                                    style={{
+                                        height: "32px",
+                                        fontSize: 12,
+                                        color: "red",
+                                        fontWeight: "bold",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                >
+                                    休み希望
+                                </div>
+                            );
+                        };
                         const end = shift?.end ?? null;
                         return (
                             <div
@@ -355,6 +431,20 @@ export default function ShiftSubmitPage() {
                                 ))}
                             </select>
                         </div>
+                        <button
+                            onClick={markHoliday}
+                            style={{
+                                marginLeft: 10,
+                                background: "orange",
+                                color: "white",
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                            }}
+                        >
+                            {saving ? "保存中..." : "休み希望"}
+                        </button>
+
+
                         <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
 
                         <button
