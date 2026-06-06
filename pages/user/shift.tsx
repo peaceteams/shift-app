@@ -265,12 +265,14 @@ export default function ShiftSubmitPage() {
                     tileContent={({ date, view }) => {
                         if (view !== "month") return null;
                         if (loading) {
-                            return <div style={{ height: "32px" }}></div>; // ← 空の高さだけ
+                            return <div style={{ height: "32px" }}></div>;
                         }
+
                         const key = date.toLocaleDateString("sv-SE");
                         const shift = shifts[key];
-                        const start = shift?.start ?? null
-                        if (shift.is_holiday) {
+
+                        // ★ 休み希望
+                        if (shift?.is_holiday) {
                             return (
                                 <div
                                     style={{
@@ -286,32 +288,35 @@ export default function ShiftSubmitPage() {
                                     休み希望
                                 </div>
                             );
-                        };
+                        }
+
+                        const start = shift?.start ?? null;
                         const end = shift?.end ?? null;
+
                         return (
                             <div
-                            style={{
-                                fontSize: 12,
-                                color: start && end ? "green" : "#aaa",
-                                height: "32px",
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                lineHeight: "14px",
-                            }}
+                                style={{
+                                    fontSize: 12,
+                                    color: start && end ? "green" : "#aaa",
+                                    height: "32px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    lineHeight: "14px",
+                                }}
                             >
-                            {start && end ? (
-                                <>
-                                <span>{start}</span>
-                                <span>{end}</span>
-                                </>
-                            ) : (
-                                <>
-                                <span>–</span>
-                                <span>–</span>
-                                </>
-                            )}
+                                {start && end ? (
+                                    <>
+                                        <span>{start}</span>
+                                        <span>{end}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>–</span>
+                                        <span>–</span>
+                                    </>
+                                )}
                             </div>
                         );
                     }}
