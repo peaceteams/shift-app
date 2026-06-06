@@ -132,7 +132,12 @@ export default function ShiftSubmitPage() {
         // ローカル更新
         setShifts((prev) => ({
             ...prev,
-            [key]: { start, end },
+            [key]: {
+                ...prev[key],   // ← これが重要
+                start,
+                end,
+                is_holiday: false, // 保存したら休み希望は解除
+            },
         }));
 
         // API 保存
@@ -143,6 +148,7 @@ export default function ShiftSubmitPage() {
             date: key,
             start,
             end,
+            is_holiday: false,
         }),
         });
 
@@ -438,22 +444,16 @@ export default function ShiftSubmitPage() {
                         </div>
                         <button onClick={markHoliday}>{saving ? "保存中..." : "休み希望"}</button>
 
-                        <button onClick={saveShift}>{saving ? "保存中..." : "保存"}</button>
+                        <button onClick={saveShift} style={{ marginLeft: 10, color: "red" }}>{saving ? "保存中..." : "保存"}</button>
 
-                        <button
-                            onClick={deleteShift}
-                            style={{ marginLeft: 10, color: "red" }}
-                        >
-                            {deleting ? "削除中..." : "削除"}
-                        </button>
+                        <button onClick={deleteShift} style={{ marginLeft: 10, color: "red" }}>{deleting ? "削除中..." : "削除"}</button>
 
-                        <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>
-                            キャンセル
-                        </button>
+                        <button onClick={() => setSelectedDate(null)} style={{ marginLeft: 10 }}>キャンセル</button>
                     </div>
                 </div>
             )}
             
             </div>
         );
-}   };
+    }   
+};
