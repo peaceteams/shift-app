@@ -56,7 +56,9 @@ export default function ShiftSubmitPage() {
         setMounted(true);
 
         wrap(async () => {
+            console.log("▶ 初回ロード開始");
             await fetchShiftsFromDB();
+            console.log("▶ 初回ロード完了");
         });
 
         const channel = supabaseClient
@@ -64,16 +66,24 @@ export default function ShiftSubmitPage() {
             .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "shift_requests" },
-                () => {
+                (payload) => {
+                    console.log("🔥 Realtime受信:", payload); // ← ここが最重要ログ
+
                     wrap(async () => {
+                        console.log("▶ Realtime → DB再取得開始");
                         await fetchShiftsFromDB();
-                        setIsSyncing(false); // 🟦 Realtime受信 → 同期終了
+                        console.log("▶ Realtime → DB再取得完了");
+                        setIsSyncing(false); // ← 同期終了
+                        console.log("🟩 isSyncing = false（同期終了）");
                     });
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                console.log("📡 Realtime subscribe 状態:", status); // ← ここも重要
+            });
 
         return () => {
+            console.log("🔌 Realtime チャンネル解除");
             supabaseClient.removeChannel(channel);
         };
     }, []);
