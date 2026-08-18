@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const isLocked =
       (lock.all_locked && lock.sync_locked) ||
-      (lock.target_category_id === categoryId && lock.sync_locked) ||
+      // (lock.target_category_id === categoryId && lock.sync_locked) ||
       (lock.target_user_id === userId && lock.sync_locked);
 
     if (isLocked) {
