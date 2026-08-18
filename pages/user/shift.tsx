@@ -58,6 +58,8 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
             return;
         }
 
+        setMounted(true);
+
         console.log("🟩 user が読み込まれた:", user.id);
 
         wrap(async () => {
