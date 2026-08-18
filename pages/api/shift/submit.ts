@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const userId = session.user_id;
-    const categoryId = session.category_id; // ← カテゴリー判定に使う
+    // const categoryId = session.category_id; // ← カテゴリー判定に使う
     console.log("▶ Authenticated user id:", userId);
 
     // リクエスト body
