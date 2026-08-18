@@ -70,7 +70,7 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
                     schema: "public",
                     table: "shift_requests",
                     // 必要ならフィルタを付ける（後述）
-                    // filter: `user_id=eq.${user.id}`
+                    filter: `user_id=eq.${user.id}`
                 },
                 (payload) => {
                     console.log("🔥 Realtime受信:", payload);
