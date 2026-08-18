@@ -179,12 +179,6 @@ export default function ShiftSubmitPage() {
                 return;
             }
 
-            setShifts((prev) => {
-                const copy = { ...prev };
-                delete copy[key];
-                return copy;
-            });
-
             setSelectedDate(null);
         });
     }
