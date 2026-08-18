@@ -70,14 +70,16 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
             .channel("shift-rt-user")
             .on(
                 "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "shift_requests",
-                    filter: `user_id=eq.${user.id}`
-                },
+                { event: "*", schema: "public", table: "shift_requests" },
                 (payload) => {
+                    const row: any = payload.new ?? payload.old;
+
+                    if (!row) return;
+                    if (!row.user_id) return;
+                    if (row.user_id !== user.id) return;
+
                     console.log("🔥 Realtime受信:", payload);
+
                     wrap(async () => {
                         await fetchShiftsFromDB();
                         setIsSyncing(false);
