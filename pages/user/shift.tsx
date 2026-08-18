@@ -72,13 +72,13 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
                 "postgres_changes",
                 { event: "*", schema: "public", table: "shift_requests" },
                 (payload) => {
+                    console.log("🔥 Realtime受信:", payload);
+
                     const row: any = payload.new ?? payload.old;
 
                     if (!row) return;
                     if (!row.user_id) return;
                     if (row.user_id !== user.id) return;
-
-                    console.log("🔥 Realtime受信:", payload);
 
                     wrap(async () => {
                         await fetchShiftsFromDB();
