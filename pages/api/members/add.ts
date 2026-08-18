@@ -72,7 +72,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: insertError.message });
   }
 
-  // 生パスワードは管理者UIに返す
+  // -----------------------------
+  // ⑤ shift_sync_state に行を追加（ユーザー単位ロック用）
+  // -----------------------------
+  const { error: syncError } = await supabaseAdmin
+    .from("shift_sync_state")
+    .insert({
+      user_id: inserted.user_id, // profiles に入れた user_id を使う
+      sync_locked: false,
+      locked_by: null,
+      locked_at: null,
+    });
+
+  if (syncError) {
+    console.error("❌ sync table insert failed:", syncError);
+    return res.status(500).json({ error: "Failed to create sync row" });
+  }
+
+  // -----------------------------
+  // ⑥ 完了レスポンス
+  // -----------------------------
   return res.status(200).json({
     ok: true,
     member: inserted,
