@@ -27,7 +27,7 @@ function trimSeconds(time: string) {
     return time.slice(0, 5); // "20:00:00" → "20:00"
 }
 
-export default function ShiftSubmitPage() {
+export default function ShiftSubmitPage({ user }: { user: any }) {
     const { loading, wrap } = useLoading();
 
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -65,21 +65,26 @@ export default function ShiftSubmitPage() {
             .channel("shift-rt-user")
             .on(
                 "postgres_changes",
-                { event: "*", schema: "public", table: "shift_requests" },
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "shift_requests",
+                    filter: `user_id=eq.${user.id}`
+                },
                 (payload) => {
-                    console.log("🔥 Realtime受信:", payload); // ← ここが最重要ログ
+                    console.log("🔥 Realtime受信:", payload);
 
                     wrap(async () => {
                         console.log("▶ Realtime → DB再取得開始");
                         await fetchShiftsFromDB();
                         console.log("▶ Realtime → DB再取得完了");
-                        setIsSyncing(false); // ← 同期終了
+                        setIsSyncing(false);
                         console.log("🟩 isSyncing = false（同期終了）");
                     });
                 }
             )
             .subscribe((status) => {
-                console.log("📡 Realtime subscribe 状態:", status); // ← ここも重要
+                console.log("📡 Realtime subscribe 状態:", status);
             });
 
         return () => {
