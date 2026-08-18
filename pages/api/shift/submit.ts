@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("▶ Fetch user session from DB");
     const { data: session, error: sessionError } = await supabaseAdmin
       .from("user_sessions")
-      .select("user_id, category_id")
+      .select("user_id")
       .eq("token", token)
       .maybeSingle();
 
