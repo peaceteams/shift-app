@@ -49,6 +49,9 @@ export default function ShiftSubmitPage() {
     const [endHour, setEndHour] = useState("00");
     const [endMin, setEndMin] = useState("00");
 
+    // 🟥 二度ロード防止フラグ
+    const [isSyncing, setIsSyncing] = useState(false);
+
     useEffect(() => {
         setMounted(true);
 
@@ -64,6 +67,7 @@ export default function ShiftSubmitPage() {
                 () => {
                     wrap(async () => {
                         await fetchShiftsFromDB();
+                        setIsSyncing(false); // 🟦 Realtime受信 → 同期終了
                     });
                 }
             )
@@ -106,6 +110,9 @@ export default function ShiftSubmitPage() {
 
     async function saveShift() {
         if (!selectedDate) return;
+        if (isSyncing) return; // 🟥 二度押し防止
+
+        setIsSyncing(true); // 🟥 同期開始
 
         const start = `${startHour}:${startMin}`;
         const end = `${endHour}:${endMin}`;
@@ -116,6 +123,7 @@ export default function ShiftSubmitPage() {
 
         if (endDate <= startDate) {
             alert("終了時間は開始時間より後にしてください。");
+            setIsSyncing(false);
             return;
         }
 
@@ -139,15 +147,20 @@ export default function ShiftSubmitPage() {
 
             if (!res.ok) {
                 alert(json.error ?? "保存に失敗しました");
+                setIsSyncing(false);
                 return;
             }
 
+            // 🟦 成功時はロードしない → Realtimeで同期終了
             setSelectedDate(null);
         });
     }
 
     async function deleteShift() {
         if (!selectedDate) return;
+        if (isSyncing) return;
+
+        setIsSyncing(true);
 
         await wrap(async () => {
             const key = selectedDate.toLocaleDateString("sv-SE");
@@ -162,6 +175,7 @@ export default function ShiftSubmitPage() {
 
             if (!res.ok) {
                 alert(json.error ?? "削除に失敗しました");
+                setIsSyncing(false);
                 return;
             }
 
@@ -177,6 +191,9 @@ export default function ShiftSubmitPage() {
 
     async function markHoliday() {
         if (!selectedDate) return;
+        if (isSyncing) return;
+
+        setIsSyncing(true);
 
         await wrap(async () => {
             const key = selectedDate.toLocaleDateString("sv-SE");
@@ -206,6 +223,7 @@ export default function ShiftSubmitPage() {
 
             if (!res.ok) {
                 alert(json.error ?? "休み希望の保存に失敗しました");
+                setIsSyncing(false);
                 return;
             }
 
