@@ -53,12 +53,15 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
     const [isSyncing, setIsSyncing] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        if (!user) {
+            console.log("⚠ user がまだ undefined");
+            return;
+        }
+
+        console.log("🟩 user が読み込まれた:", user.id);
 
         wrap(async () => {
-            console.log("▶ 初回ロード開始");
             await fetchShiftsFromDB();
-            console.log("▶ 初回ロード完了");
         });
 
         const channel = supabaseClient
@@ -69,30 +72,24 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
                     event: "*",
                     schema: "public",
                     table: "shift_requests",
-                    // 必要ならフィルタを付ける（後述）
                     filter: `user_id=eq.${user.id}`
                 },
                 (payload) => {
                     console.log("🔥 Realtime受信:", payload);
-
                     wrap(async () => {
-                        console.log("▶ Realtime → DB再取得開始");
                         await fetchShiftsFromDB();
-                        console.log("▶ Realtime → DB再取得完了");
                         setIsSyncing(false);
-                        console.log("🟩 isSyncing = false（同期終了）");
                     });
                 }
             )
             .subscribe((status) => {
-                console.log("📡 Realtime subscribe 状態:", status);
+                console.log("📡 subscribe 状態:", status);
             });
 
         return () => {
-            console.log("🔌 Realtime チャンネル解除");
             supabaseClient.removeChannel(channel);
         };
-    }, []);
+    }, [user]);
 
     async function fetchShiftsFromDB() {
         const res = await fetch("/api/shift/get");
