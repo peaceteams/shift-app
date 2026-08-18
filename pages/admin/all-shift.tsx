@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
-import { supabase } from "@/lib/supabase/client";
+import { supabaseClient } from "@/lib/supabase/client";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
@@ -53,7 +53,7 @@ export default function AllShiftPage() {
 
         run();
 
-        const channel = supabase
+        const channel = supabaseClient
             .channel("shift-rt")
             .on(
             "postgres_changes",
@@ -67,19 +67,19 @@ export default function AllShiftPage() {
         window.addEventListener("resize", adjustScale);
 
         return () => {
-            supabase.removeChannel(channel);
+            supabaseClient.removeChannel(channel);
             window.removeEventListener("resize", adjustScale);
         };
     }, [startDate, endDate]); // ← 期間変更時にも縮小し直す
 
     async function load() {
         // プロフィールは全取得でOK
-        const { data: profiles } = await supabase.from("profiles").select("*");
+        const { data: profiles } = await supabaseClient.from("profiles").select("*");
         const sorted = (profiles || []).sort((a, b) => Number(a.user_id) - Number(b.user_id));
         setUsers(sorted);
 
         // 期間指定がある場合はフィルタ
-        let query = supabase.from("shift_requests").select("*");
+        let query = supabaseClient.from("shift_requests").select("*");
 
         if (startDate) query = query.gte("date", startDate);
         if (endDate) query = query.lte("date", endDate);

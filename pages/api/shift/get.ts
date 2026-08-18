@@ -1,6 +1,6 @@
 // /pages/api/shift/get.ts
 import { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseApi } from "@/lib/supabase/api";
 import { parse } from "cookie";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,12 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!token) return res.status(401).json({ error: "Not logged in" });
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { data: session } = await supabaseAdmin
+  const { data: session } = await supabaseApi
     .from("user_sessions")
     .select("user_id")
     .eq("token", token)
@@ -23,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!session) return res.status(401).json({ error: "Invalid session" });
 
   // ★ is_confirmed / is_holiday を追加
-  const { data } = await supabaseAdmin
+  const { data } = await supabaseApi
     .from("shift_requests")
     .select("date, start_time, end_time, is_confirmed, is_holiday")
     .eq("user_id", session.user_id);

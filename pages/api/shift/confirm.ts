@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseApi } from "@/lib/supabase/api";
 import { requireAdminAPI } from "@/lib/auth/api/requireAdminAPI";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -16,12 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "Missing parameters" });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { error } = await supabase
+  const { error } = await supabaseApi
     .from("shift_requests")
     .update({ is_confirmed: true })
     .eq("user_id", user_id)

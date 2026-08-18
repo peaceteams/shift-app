@@ -1,6 +1,6 @@
 // /lib/auth/userAuth.ts
-import { createClient } from "@supabase/supabase-js";
 import { parse } from "cookie";
+import { supabaseApi } from "@/lib/supabase/api";
 
 export async function requireUser(ctx: any) {
   const cookies = parse(ctx.req.headers.cookie || "");
@@ -16,13 +16,8 @@ export async function requireUser(ctx: any) {
     };
   }
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
   // セッション検索
-  const { data: session } = await supabaseAdmin
+  const { data: session } = await supabaseApi
     .from("user_sessions")
     .select("user_id")
     .eq("token", token)
@@ -39,7 +34,7 @@ export async function requireUser(ctx: any) {
   }
 
   // プロフィール取得
-  const { data: user } = await supabaseAdmin
+  const { data: user } = await supabaseApi
     .from("profiles")
     .select("id, user_id, name, discord_id")
     .eq("id", session.user_id)

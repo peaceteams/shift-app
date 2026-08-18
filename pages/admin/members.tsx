@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
-import { supabase } from "@/lib/supabase/client";
+import { supabaseClient } from "@/lib/supabase/client";
 import { createClient } from "@supabase/supabase-js";
 
 type Member = {
@@ -29,7 +29,7 @@ export default function Members({ user, initialMembers }: MembersProps) {
   useEffect(() => {
     // console.log("🔌 Realtime: useEffect START");
 
-    const channel = supabase
+    const channel = supabaseClient
       .channel("profiles-realtime")
       .on(
         "postgres_changes",
@@ -74,7 +74,7 @@ export default function Members({ user, initialMembers }: MembersProps) {
 
     return () => {
       // console.log("🔌 Removing channel");
-      supabase.removeChannel(channel);
+      supabaseClient.removeChannel(channel);
     };
   }, []);
 

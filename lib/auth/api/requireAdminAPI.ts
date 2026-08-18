@@ -1,7 +1,7 @@
 // lib/auth/requireAdminAPI.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { parse } from "cookie";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseApi } from "@/lib/supabase/api";
 
 export async function requireAdminAPI(req: NextApiRequest, res: NextApiResponse) {
   const cookies = parse(req.headers.cookie || "");
@@ -12,12 +12,7 @@ export async function requireAdminAPI(req: NextApiRequest, res: NextApiResponse)
     return { ok: false };
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { data, error } = await supabase
+  const { data, error } = await supabaseApi
     .from("admin_sessions")
     .select("admin_id")
     .eq("token", token)

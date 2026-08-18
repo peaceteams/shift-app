@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
-import { createClient } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase/client";
+import { supabaseClient } from "@/lib/supabase/client";
+import { supabaseApi } from "@/lib/supabase/api";
 import { useRouter } from "next/router";
 
 type Member = {
@@ -60,7 +60,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     // -----------------------------
     // profiles
     // -----------------------------
-    const profilesChannel = supabase
+    const profilesChannel = supabaseClient
       .channel("profiles-realtime")
       .on(
         "postgres_changes",
@@ -105,7 +105,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     // -----------------------------
     // shift_links
     // -----------------------------
-    const linksChannel = supabase
+    const linksChannel = supabaseClient
       .channel("shift-links-realtime")
       .on(
         "postgres_changes",
@@ -168,8 +168,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
     return () => {
       // console.log("🔌 Realtime チャンネル解除");
-      supabase.removeChannel(profilesChannel);
-      supabase.removeChannel(linksChannel);
+      supabaseClient.removeChannel(profilesChannel);
+      supabaseClient.removeChannel(linksChannel);
     };
   }, []);
   
@@ -547,13 +547,10 @@ export const getServerSideProps = async (ctx: any) => {
   const auth = await requireAdmin(ctx);
   if (!auth.ok) return { redirect: auth.redirect };
 
-  const supabaseServer = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+
 
   // ① profiles
-  const { data: profiles } = await supabaseServer
+  const { data: profiles } = await supabaseApi
     .from("profiles")
     .select("id, name, user_id, password_hash, discord_id")
     .order("created_at");
@@ -566,7 +563,7 @@ export const getServerSideProps = async (ctx: any) => {
   }));
 
   // ③ shift_links（重要）
-  const { data: links } = await supabaseServer
+  const { data: links } = await supabaseApi
     .from("shift_links")
     .select("user_id, token");
 

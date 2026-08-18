@@ -1,5 +1,5 @@
 import { GetServerSidePropsContext } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseApi } from "@/lib/supabase/api";
 
 export async function requireAdmin(ctx: GetServerSidePropsContext) {
   console.log("▶ SSR 認証開始");
@@ -18,13 +18,8 @@ export async function requireAdmin(ctx: GetServerSidePropsContext) {
     };
   }
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
   // セッション確認
-  const { data: session } = await supabaseAdmin
+  const { data: session } = await supabaseApi
     .from("admin_sessions")
     .select("admin_id")
     .eq("token", token)
@@ -41,7 +36,7 @@ export async function requireAdmin(ctx: GetServerSidePropsContext) {
   }
 
   // 管理者情報取得
-  const { data: admin } = await supabaseAdmin
+  const { data: admin } = await supabaseApi
     .from("admins")
     .select("id")
     .eq("id", session.admin_id)

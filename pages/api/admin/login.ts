@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseApi } from "@/lib/supabase/api";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { serialize } from "cookie";
@@ -14,13 +14,8 @@ export default async function handler(
 
   const { password } = req.body;
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
   // 管理者レコードを取得（1件だけ）
-  const { data: admin, error } = await supabaseAdmin
+  const { data: admin, error } = await supabaseApi
     .from("admins")
     .select("id, password_hash")
     .single();
@@ -38,7 +33,7 @@ export default async function handler(
   // セッショントークン発行
   const token = randomBytes(32).toString("hex");
 
-  await supabaseAdmin.from("admin_sessions").insert({
+  await supabaseApi.from("admin_sessions").insert({
     token,
     admin_id: admin.id,
   });

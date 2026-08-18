@@ -3,7 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { GetServerSidePropsContext } from "next";
 import { requireUser } from "@/lib/auth/page/userAuth";
-import { supabase } from "@/lib/supabase/client";
+import { supabaseClient } from "@/lib/supabase/client";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import { useLoading } from "@/hooks/useLoading";
 
@@ -56,7 +56,7 @@ export default function ShiftSubmitPage() {
             await fetchShiftsFromDB();
         });
 
-        const channel = supabase
+        const channel = supabaseClient
             .channel("shift-rt-user")
             .on(
                 "postgres_changes",
@@ -70,7 +70,7 @@ export default function ShiftSubmitPage() {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabaseClient.removeChannel(channel);
         };
     }, []);
 
