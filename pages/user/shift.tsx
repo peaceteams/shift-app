@@ -138,53 +138,86 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
         setEnd(shifts[key]?.end ?? "");
     }
 
-    async function saveShift() {
-        if (!selectedDate) return;
-        if (isSyncing) return; // 🟥 二度押し防止
+        async function saveShift() {
+            if (!selectedDate) return;
+            if (isSyncing) return;
 
-        setIsSyncing(true); // 🟥 同期開始
+            setIsSyncing(true);
 
-        const start = `${startHour}:${startMin}`;
-        const end = `${endHour}:${endMin}`;
+            const start = `${startHour}:${startMin}`;
+            const end = `${endHour}:${endMin}`;
+            const key = selectedDate.toLocaleDateString("sv-SE");
 
-        const key = selectedDate.toLocaleDateString("sv-SE");
-        const startDate = new Date(`2000-01-01T${start}`);
-        const endDate = new Date(`2000-01-01T${end}`);
+            const startDate = new Date(`2000-01-01T${start}`);
+            const endDate = new Date(`2000-01-01T${end}`);
 
-        if (endDate <= startDate) {
-            alert("終了時間は開始時間より後にしてください。");
-            setIsSyncing(false);
-            return;
-        }
-
-        await wrap(async () => {
-            setShifts((prev) => ({
-                ...prev,
-                [key]: { start, end },
-            }));
-
-            const res = await fetch("/api/shift/submit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    date: key,
-                    start,
-                    end,
-                }),
-            });
-
-            const json = await res.json();
-
-            if (!res.ok) {
-                alert(json.error ?? "保存に失敗しました");
+            if (endDate <= startDate) {
+                alert("終了時間は開始時間より後にしてください。");
                 setIsSyncing(false);
                 return;
             }
 
-            // 🟦 成功時はロードしない → Realtimeで同期終了
-            setSelectedDate(null);
-        });
-    }
+            await wrap(async () => {
+                // 🟥 ① ロックチェック
+                const { data: lock } = await supabaseClient
+                .from("shift_sync_state")
+                .select("sync_locked")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+                if (!lock) {
+                alert("Lock state not found");
+                setIsSyncing(false);
+                return;
+                }
+
+                if (lock.sync_locked) {
+                alert("現在あなたのシフトは同期中のため変更できません。");
+                setIsSyncing(false);
+                return;
+                }
+
+                // 🟦 ② ロックON
+                await supabaseClient
+                .from("shift_sync_state")
+                .update({
+                    sync_locked: true,
+                    locked_by: user.id,
+                    locked_at: new Date(),
+                })
+                .eq("user_id", user.id);
+
+                // 🟩 ③ 既存削除
+                await supabaseClient
+                .from("shift_requests")
+                .delete()
+                .eq("user_id", user.id)
+                .eq("date", key);
+
+                // 🟩 ④ 新規保存（Realtime が確実に飛ぶ）
+                await supabaseClient
+                .from("shift_requests")
+                .insert({
+                    user_id: user.id,
+                    date: key,
+                    start_time: start,
+                    end_time: end,
+                    is_holiday: false,
+                });
+
+                // 🟦 ⑤ ロックOFF
+                await supabaseClient
+                .from("shift_sync_state")
+                .update({
+                    sync_locked: false,
+                    locked_by: null,
+                    locked_at: null,
+                })
+                .eq("user_id", user.id);
+
+                setSelectedDate(null);
+            });
+        }
 
     async function deleteShift() {
         if (!selectedDate) return;
