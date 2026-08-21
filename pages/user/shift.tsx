@@ -83,7 +83,13 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
                 (payload) => {
                     console.log("🔥 Realtime受信:", payload);
 
-                    const row: any = payload.new ?? payload.old;
+                    // DELETE は old が {} になるので無視
+                    if (payload.eventType === "DELETE") {
+                        console.log("⚠ DELETE イベントは無視します");
+                        return;
+                    }
+
+                    const row: any = payload.new;
 
                     console.log("📡 row:", row);
 
