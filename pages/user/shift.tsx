@@ -75,51 +75,30 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
         // -----------------------------
         console.log("🔌 Realtime チャンネル作成開始");
 
-        const channel = supabaseClient
-            .channel("shift-rt-user")
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "shift_requests" },
-                (payload) => {
-                    console.log("🔥 Realtime受信:", payload);
+        const channel = supabaseClient.channel("shift-rt-user");
+        channel.on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "shift_requests" },
+            (payload) => {
+                console.log("🔥 Realtime受信:", payload);
 
-                    // DELETE は old が {} になるので無視
-                    if (payload.eventType === "DELETE") {
-                        console.log("⚠ DELETE イベントは無視します");
-                        return;
-                    }
+                // 👇 payload.new を any として扱う（TSエラーを完全に消す）
+                const row = (payload.new ?? payload.old) as any;
 
-                    const row: any = payload.new;
+                if (!row) return;
+                if (!row.user_id) return;
+                if (row.user_id !== user.id) return;
 
-                    console.log("📡 row:", row);
+                wrap(async () => {
+                await fetchShiftsFromDB();
+                setIsSyncing(false);
+                });
+            }
+        );
 
-                    if (!row) {
-                        console.log("⚠ row が null → return");
-                        return;
-                    }
-                    if (!row.user_id) {
-                        console.log("⚠ row.user_id が null → return");
-                        return;
-                    }
-                    if (row.user_id !== user.id) {
-                        console.log(`⚠ user_id 不一致 row:${row.user_id} local:${user.id} → return`);
-                        return;
-                    }
-
-                    console.log("🟦 Realtime: 自分のデータなので fetchShiftsFromDB 実行");
-
-                    wrap(async () => {
-                        console.log("📥 Realtime → fetchShiftsFromDB 実行");
-                        await fetchShiftsFromDB();
-                        console.log("📤 Realtime → fetchShiftsFromDB 完了");
-                        console.log("🔓 isSyncing を false に変更");
-                        setIsSyncing(false);
-                    });
-                }
-            )
-            .subscribe((status) => {
-                console.log("📡 Realtime subscribe 状態:", status);
-            });
+        channel.subscribe((status) => {
+        console.log("📡 Realtime subscribe 状態:", status);
+        });
 
         console.log("🔌 Realtime チャンネル作成完了");
 
