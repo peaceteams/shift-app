@@ -4,12 +4,17 @@ import { parse } from "cookie";
 import jwt from "jsonwebtoken";
 import { createClient } from "@supabase/supabase-js";
 
-export async function requireAdminAPI(req: NextApiRequest, res: NextApiResponse) {
+export async function requireAdminAPI(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const cookies = parse(req.headers.cookie || "");
 
   // ★ Supabase が読む JWT（RLS用）
   const jwtToken =
     cookies[`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_REF}-auth-token`];
+
+  console.log("JWT token:", jwtToken);
 
   if (!jwtToken) {
     res.status(401).json({ error: "Not admin" });
@@ -20,12 +25,14 @@ export async function requireAdminAPI(req: NextApiRequest, res: NextApiResponse)
   let decoded: jwt.JwtPayload;
   try {
     decoded = jwt.verify(jwtToken, process.env.JWT_SECRET!) as jwt.JwtPayload;
+    console.log("decoded JWT:", decoded);
 
     if (decoded.role !== "admin") {
       res.status(401).json({ error: "Not admin" });
       return { ok: false };
     }
-  } catch {
+  } catch (e) {
+    console.log("JWT verify error:", e);
     res.status(401).json({ error: "Invalid JWT" });
     return { ok: false };
   }
@@ -37,15 +44,17 @@ export async function requireAdminAPI(req: NextApiRequest, res: NextApiResponse)
     {
       global: {
         headers: {
-          Authorization: `Bearer ${jwtToken}`, // ← これが RLS を動かす
+          Authorization: `Bearer ${jwtToken}`,
         },
       },
     }
   );
 
+  console.log("Authorization header:", `Bearer ${jwtToken}`);
+
   return {
     ok: true,
     admin_id: decoded.sub,
-    supabaseRLS, // ← API側でこれを使って SELECT / UPDATE する
+    supabaseRLS,
   };
 }
