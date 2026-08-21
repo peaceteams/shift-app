@@ -73,7 +73,7 @@ export default function AllShiftPage() {
     }, [startDate, endDate]); // ← 期間変更時にも縮小し直す
 
     async function load() {
-        const res = await fetch("/api/shift/list", {
+        const res = await fetch("/api/admin/list", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
