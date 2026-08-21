@@ -138,86 +138,86 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
         setEnd(shifts[key]?.end ?? "");
     }
 
-        async function saveShift() {
-            if (!selectedDate) return;
-            if (isSyncing) return;
+    async function saveShift() {
+        if (!selectedDate) return;
+        if (isSyncing) return;
 
-            setIsSyncing(true);
+        setIsSyncing(true);
 
-            const start = `${startHour}:${startMin}`;
-            const end = `${endHour}:${endMin}`;
-            const key = selectedDate.toLocaleDateString("sv-SE");
+        const start = `${startHour}:${startMin}`;
+        const end = `${endHour}:${endMin}`;
+        const key = selectedDate.toLocaleDateString("sv-SE");
 
-            const startDate = new Date(`2000-01-01T${start}`);
-            const endDate = new Date(`2000-01-01T${end}`);
+        const startDate = new Date(`2000-01-01T${start}`);
+        const endDate = new Date(`2000-01-01T${end}`);
 
-            if (endDate <= startDate) {
-                alert("終了時間は開始時間より後にしてください。");
-                setIsSyncing(false);
-                return;
+        if (endDate <= startDate) {
+            alert("終了時間は開始時間より後にしてください。");
+            setIsSyncing(false);
+            return;
+        }
+
+        await wrap(async () => {
+            // 🟥 ① ロックチェック
+            const { data: lock } = await supabaseClient
+            .from("shift_sync_state")
+            .select("sync_locked")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+            if (!lock) {
+            alert("Lock state not found");
+            setIsSyncing(false);
+            return;
             }
 
-            await wrap(async () => {
-                // 🟥 ① ロックチェック
-                const { data: lock } = await supabaseClient
-                .from("shift_sync_state")
-                .select("sync_locked")
-                .eq("user_id", user.id)
-                .maybeSingle();
+            if (lock.sync_locked) {
+            alert("現在あなたのシフトは同期中のため変更できません。");
+            setIsSyncing(false);
+            return;
+            }
 
-                if (!lock) {
-                alert("Lock state not found");
-                setIsSyncing(false);
-                return;
-                }
+            // 🟦 ② ロックON
+            await supabaseClient
+            .from("shift_sync_state")
+            .update({
+                sync_locked: true,
+                locked_by: user.id,
+                locked_at: new Date(),
+            })
+            .eq("user_id", user.id);
 
-                if (lock.sync_locked) {
-                alert("現在あなたのシフトは同期中のため変更できません。");
-                setIsSyncing(false);
-                return;
-                }
+            // 🟩 ③ 既存削除
+            await supabaseClient
+            .from("shift_requests")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("date", key);
 
-                // 🟦 ② ロックON
-                await supabaseClient
-                .from("shift_sync_state")
-                .update({
-                    sync_locked: true,
-                    locked_by: user.id,
-                    locked_at: new Date(),
-                })
-                .eq("user_id", user.id);
-
-                // 🟩 ③ 既存削除
-                await supabaseClient
-                .from("shift_requests")
-                .delete()
-                .eq("user_id", user.id)
-                .eq("date", key);
-
-                // 🟩 ④ 新規保存（Realtime が確実に飛ぶ）
-                await supabaseClient
-                .from("shift_requests")
-                .insert({
-                    user_id: user.id,
-                    date: key,
-                    start_time: start,
-                    end_time: end,
-                    is_holiday: false,
-                });
-
-                // 🟦 ⑤ ロックOFF
-                await supabaseClient
-                .from("shift_sync_state")
-                .update({
-                    sync_locked: false,
-                    locked_by: null,
-                    locked_at: null,
-                })
-                .eq("user_id", user.id);
-
-                setSelectedDate(null);
+            // 🟩 ④ 新規保存（Realtime が確実に飛ぶ）
+            await supabaseClient
+            .from("shift_requests")
+            .insert({
+                user_id: user.id,
+                date: key,
+                start_time: start,
+                end_time: end,
+                is_holiday: false,
             });
-        }
+
+            // 🟦 ⑤ ロックOFF
+            await supabaseClient
+            .from("shift_sync_state")
+            .update({
+                sync_locked: false,
+                locked_by: null,
+                locked_at: null,
+            })
+            .eq("user_id", user.id);
+
+            setSelectedDate(null);
+        });
+    }
 
     async function deleteShift() {
         if (!selectedDate) return;
