@@ -73,27 +73,28 @@ export default function AllShiftPage() {
     }, [startDate, endDate]); // ← 期間変更時にも縮小し直す
 
     async function load() {
-        console.log("=== load() start ===");
+        const res = await fetch("/api/shift/list", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                startDate,
+                endDate,
+            }),
+        });
 
-        // プロフィール
-        const profilesRes = await supabaseClient.from("profiles").select("*");
-        console.log("profiles response:", profilesRes);
+        if (!res.ok) {
+            console.error("Failed to load shifts");
+            return;
+        }
 
-        const sorted = (profilesRes.data || []).sort((a, b) => Number(a.user_id) - Number(b.user_id));
+        const { profiles, shifts } = await res.json();
+
+        const sorted = (profiles as User[]).sort(
+            (a: User, b: User) => Number(a.user_id) - Number(b.user_id)
+        );
+
         setUsers(sorted);
-
-        // シフト
-        let query = supabaseClient.from("shift_requests").select("*");
-
-        if (startDate) query = query.gte("date", startDate);
-        if (endDate) query = query.lte("date", endDate);
-
-        const shiftRes = await query;
-        console.log("shift_requests response:", shiftRes);
-
-        setShifts(shiftRes.data || []);
-
-        console.log("=== load() end ===");
+        setShifts(shifts as Shift[]);
     }
 
     // 日付一覧を作る
