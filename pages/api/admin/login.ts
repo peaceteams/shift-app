@@ -56,13 +56,13 @@ export default async function handler(
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     }),
-    serialize("supabase-auth-token", adminJwt, {
-      httpOnly: false, // Supabase が読む必要がある
+    serialize(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_REF}-auth-token`, adminJwt, {
+      httpOnly: false,
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
-    }),
+    })
   ]);
 
   return res.json({ ok: true });
