@@ -41,8 +41,9 @@ export default async function handler(
   // ★ JWT 発行（RLS 用）
   const adminJwt = jwt.sign(
     {
-      sub: admin.id,   // admins.id の uuid
-      role: "admin",   // 管理者判定
+      aud: "authenticated",   // ← これが必須！
+      sub: admin.id,          // admins.id の uuid
+      role: "admin",          // 管理者判定
     },
     process.env.JWT_SECRET!,
     { expiresIn: "7d" }
