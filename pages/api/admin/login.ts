@@ -16,7 +16,7 @@ export default async function handler(
   const { password } = req.body;
 
   // 管理者レコードを取得（1件だけ）
-  const { data: admin, error } = await supabaseApi
+  const { data: admin } = await supabaseApi
     .from("admins")
     .select("id, password_hash")
     .single();
@@ -26,7 +26,6 @@ export default async function handler(
   }
 
   const ok = await bcrypt.compare(password, admin.password_hash);
-
   if (!ok) {
     return res.status(401).json({ error: "パスワードが違います" });
   }
@@ -49,15 +48,15 @@ export default async function handler(
     { expiresIn: "7d" }
   );
 
-  // Cookie に保存（JWT は httpOnly=false）
+  // ★ Cookie に保存（JWT は supabase-auth-token に変更）
   res.setHeader("Set-Cookie", [
     serialize("admin_session", token, {
       httpOnly: true,
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     }),
-    serialize("admin_jwt", adminJwt, {
-      httpOnly: false, // フロントで読める必要がある
+    serialize("supabase-auth-token", adminJwt, {
+      httpOnly: false, // Supabase が読む必要がある
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
