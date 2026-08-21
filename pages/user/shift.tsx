@@ -53,18 +53,27 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
     const [isSyncing, setIsSyncing] = useState(false);
 
     useEffect(() => {
+        console.log("🟦 useEffect START user:", user);
+
         if (!user) {
-            console.log("⚠ user がまだ undefined");
+            console.log("⚠ user がまだ undefined → useEffect return");
             return;
         }
 
         setMounted(true);
-
         console.log("🟩 user が読み込まれた:", user.id);
 
+        // 初回ロード
         wrap(async () => {
+            console.log("📥 初回 fetchShiftsFromDB 実行");
             await fetchShiftsFromDB();
+            console.log("📤 初回 fetchShiftsFromDB 完了");
         });
+
+        // -----------------------------
+        // 🔌 Realtime 購読開始
+        // -----------------------------
+        console.log("🔌 Realtime チャンネル作成開始");
 
         const channel = supabaseClient
             .channel("shift-rt-user")
@@ -76,21 +85,40 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
 
                     const row: any = payload.new ?? payload.old;
 
-                    if (!row) return;
-                    if (!row.user_id) return;
-                    if (row.user_id !== user.id) return;
+                    console.log("📡 row:", row);
+
+                    if (!row) {
+                        console.log("⚠ row が null → return");
+                        return;
+                    }
+                    if (!row.user_id) {
+                        console.log("⚠ row.user_id が null → return");
+                        return;
+                    }
+                    if (row.user_id !== user.id) {
+                        console.log(`⚠ user_id 不一致 row:${row.user_id} local:${user.id} → return`);
+                        return;
+                    }
+
+                    console.log("🟦 Realtime: 自分のデータなので fetchShiftsFromDB 実行");
 
                     wrap(async () => {
+                        console.log("📥 Realtime → fetchShiftsFromDB 実行");
                         await fetchShiftsFromDB();
+                        console.log("📤 Realtime → fetchShiftsFromDB 完了");
+                        console.log("🔓 isSyncing を false に変更");
                         setIsSyncing(false);
                     });
                 }
             )
             .subscribe((status) => {
-                console.log("📡 subscribe 状態:", status);
+                console.log("📡 Realtime subscribe 状態:", status);
             });
 
+        console.log("🔌 Realtime チャンネル作成完了");
+
         return () => {
+            console.log("🔌 Realtime チャンネル解除");
             supabaseClient.removeChannel(channel);
         };
     }, [user]);
