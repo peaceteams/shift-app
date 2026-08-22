@@ -1,6 +1,6 @@
 // /pages/api/members/add.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -13,6 +13,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!token) {
     return res.status(401).json({ error: "Not authenticated" });
   }
+
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
 
   // -----------------------------
   // ② セッション確認
@@ -72,26 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: insertError.message });
   }
 
-  // -----------------------------
-  // ⑤ shift_sync_state に行を追加（ユーザー単位ロック用）
-  // -----------------------------
-  const { error: syncError } = await supabaseAdmin
-    .from("shift_sync_state")
-    .insert({
-      user_id: inserted.user_id, // profiles に入れた user_id を使う
-      sync_locked: false,
-      locked_by: null,
-      locked_at: null,
-    });
-
-  if (syncError) {
-    console.error("❌ sync table insert failed:", syncError);
-    return res.status(500).json({ error: "Failed to create sync row" });
-  }
-
-  // -----------------------------
-  // ⑥ 完了レスポンス
-  // -----------------------------
+  // 生パスワードは管理者UIに返す
   return res.status(200).json({
     ok: true,
     member: inserted,
