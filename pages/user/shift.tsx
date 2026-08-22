@@ -71,6 +71,7 @@ export default function ShiftSubmitPage() {
                 "postgres_changes",
                 { event: "*", schema: "public", table: "shift_requests" },
                 () => {
+                    console.log("🔥Realtime受信")
                     fetchShiftsFromDB(); // ← 変更があれば即再取得
                 }
             )
