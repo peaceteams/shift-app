@@ -66,33 +66,33 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         "postgres_changes",
         { event: "*", schema: "public", table: "profiles" },
         (payload: any) => {
-          // console.log("📡 [profiles] Realtime 受信:", payload);
+          console.log("📡 [profiles] Realtime 受信:", payload);
 
           const newRow = payload.new as Member | null;
           const oldRow = payload.old as Member | null;
 
           setMembers((prev) => {
-            // console.log("📘 [profiles] 更新前 members:", prev);
+            console.log("📘 [profiles] 更新前 members:", prev);
 
             switch (payload.eventType) {
               case "INSERT":
-                // console.log("➕ INSERT:", newRow);
+                console.log("➕ INSERT:", newRow);
                 return newRow ? [...prev, newRow] : prev;
 
               case "UPDATE":
-                // console.log("♻ UPDATE:", newRow);
+                console.log("♻ UPDATE:", newRow);
                 return newRow
                   ? prev.map((m) => (m.id === newRow.id ? newRow : m))
                   : prev;
 
               case "DELETE":
-                // console.log("🗑 DELETE:", oldRow);
+                console.log("🗑 DELETE:", oldRow);
                 return oldRow
                   ? prev.filter((m) => m.id !== oldRow.id)
                   : prev;
 
               default:
-                // console.log("❓ 未知イベント:", payload.eventType);
+                console.log("❓ 未知イベント:", payload.eventType);
                 return prev;
             }
           });
