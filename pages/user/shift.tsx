@@ -3,8 +3,8 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { GetServerSidePropsContext } from "next";
 import { requireUser } from "@/lib/auth/page/userAuth";
-import { supabaseClient } from "@/lib/supabase/client";
 import LoadingOverlay from "@/components/LoadingOverlay";
+import { supabaseClient } from "@/lib/supabase/client";
 import { useLoading } from "@/hooks/useLoading";
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
@@ -16,18 +16,18 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 
     return {
         props: {
-            user: auth.user,
+        user: auth.user,
         },
     };
-}
+    }
 
-// 秒を消す
-function trimSeconds(time: string) {
+    // 秒を消す
+    function trimSeconds(time: string) {
     if (!time) return "";
-    return time.slice(0, 5); // "20:00:00" → "20:00"
-}
+    return time.slice(0, 5);
+    }
 
-export default function ShiftSubmitPage({ user }: { user: any }) {
+    export default function ShiftSubmitPage({ user }: { user: any }) {
     const { loading, wrap } = useLoading();
 
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -49,76 +49,42 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
     const [endHour, setEndHour] = useState("00");
     const [endMin, setEndMin] = useState("00");
 
-    // 🟥 二度ロード防止フラグ
-    const [isSyncing, setIsSyncing] = useState(false);
-
+    // -----------------------------
+    // 初回ロード + Realtime購読
+    // -----------------------------
     useEffect(() => {
-        console.log("🟦 useEffect START user:", user);
+        if (!user) return;
 
-        if (!user) {
-            console.log("⚠ user がまだ undefined → useEffect return");
-            return;
-        }
-
-        setMounted(true);
-        console.log("🟩 user が読み込まれた:", user.id);
-
-        // 初回ロード
         wrap(async () => {
-            console.log("📥 初回 fetchShiftsFromDB 実行");
             await fetchShiftsFromDB();
-            console.log("📤 初回 fetchShiftsFromDB 完了");
         });
 
-        // -----------------------------
-        // 🔌 Realtime 購読開始
-        // -----------------------------
-        console.log("🔌 Realtime チャンネル作成開始");
-
+        // Realtime
         const channel = supabaseClient.channel("shift-rt-user");
 
         channel.on(
             "postgres_changes",
             { event: "*", schema: "public", table: "shift_requests" },
             (payload) => {
-                console.log("🔥 Realtime受信:", {
-                event: payload.eventType,
-                new: payload.new,
-                old: payload.old,
-                raw: payload,
-            });
+                console.log("🔥 Realtime受信:", payload);
 
-            const row = (payload.new ?? payload.old) as any;
+                const row = (payload.new ?? payload.old) as any;
+                if (!row) return;
+                if (row.user_id !== user.id) return;
 
-            if (!row) {
-                console.log("⚠ row が空 → RLS でブロックされている可能性");
-                return;
+                wrap(async () => {
+                    await fetchShiftsFromDB();
+                });
             }
-
-            if (!row.user_id) {
-                console.log("⚠ user_id が無い → Realtime の old/new が空の可能性");
-                return;
-            }
-
-            if (row.user_id !== user.id) {
-                console.log("⚠ 他ユーザーのイベントなので無視");
-                return;
-            }
-
-            wrap(async () => {
-                console.log("📥 Realtime → fetchShiftsFromDB 実行");
-                await fetchShiftsFromDB();
-                console.log("📤 Realtime → fetchShiftsFromDB 完了");
-                setIsSyncing(false);
-            });
-        }
         );
 
         channel.subscribe((status) => {
-        console.log("📡 Realtime subscribe 状態:", status);
+            console.log("📡 Realtime subscribe 状態:", status);
         });
 
-        console.log("🔌 Realtime チャンネル作成完了");
+        return () => {
+            supabaseClient.removeChannel(channel);
+        };
     }, [user]);
 
     async function fetchShiftsFromDB() {
@@ -126,21 +92,21 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
         const json = await res.json();
 
         if (res.ok) {
-            const formatted = Object.fromEntries(
-                Object.entries(json.shifts).map(([date, v]) => {
-                    const val = v as any;
-                    return [
-                        date,
-                        {
-                            start: trimSeconds(val.start),
-                            end: trimSeconds(val.end),
-                            is_confirmed: val.is_confirmed ?? false,
-                            is_holiday: val.is_holiday ?? false,
-                        },
-                    ];
-                })
-            );
-            setShifts(formatted);
+        const formatted = Object.fromEntries(
+            Object.entries(json.shifts).map(([date, v]) => {
+                const val = v as any;
+                return [
+                    date,
+                    {
+                    start: trimSeconds(val.start),
+                    end: trimSeconds(val.end),
+                    is_confirmed: val.is_confirmed ?? false,
+                    is_holiday: val.is_holiday ?? false,
+                    },
+                ];
+            })
+        );
+        setShifts(formatted);
         }
     }
 
@@ -153,9 +119,6 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
 
     async function saveShift() {
         if (!selectedDate) return;
-        if (isSyncing) return;
-
-        setIsSyncing(true);
 
         const start = `${startHour}:${startMin}`;
         const end = `${endHour}:${endMin}`;
@@ -166,7 +129,6 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
 
         if (endDate <= startDate) {
             alert("終了時間は開始時間より後にしてください。");
-            setIsSyncing(false);
             return;
         }
 
@@ -175,10 +137,10 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    date: key,
-                    start,
-                    end,
-                    is_holiday: false,
+                date: key,
+                start,
+                end,
+                is_holiday: false,
                 }),
             });
 
@@ -186,27 +148,16 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
 
             if (!res.ok) {
                 alert(json.error ?? "保存に失敗しました");
-                setIsSyncing(false);
                 return;
             }
 
-            console.log("✅ API /shift/submit 完了 → DB 書き込み完了が保証された");
-
-            // API 完了時点で DB 書き込みは確定している
-            // Realtime が飛べば UI が自動更新される
-            // 飛ばなくても fetchShiftsFromDB を呼べば確実に反映される
-
             await fetchShiftsFromDB();
-
             setSelectedDate(null);
         });
     }
 
     async function deleteShift() {
         if (!selectedDate) return;
-        if (isSyncing) return;
-
-        setIsSyncing(true);
 
         await wrap(async () => {
             const key = selectedDate.toLocaleDateString("sv-SE");
@@ -221,41 +172,28 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
 
             if (!res.ok) {
                 alert(json.error ?? "削除に失敗しました");
-                setIsSyncing(false);
                 return;
             }
 
+            await fetchShiftsFromDB();
             setSelectedDate(null);
         });
     }
 
     async function markHoliday() {
         if (!selectedDate) return;
-        if (isSyncing) return;
-
-        setIsSyncing(true);
 
         await wrap(async () => {
             const key = selectedDate.toLocaleDateString("sv-SE");
-
-            setShifts((prev) => ({
-                ...prev,
-                [key]: {
-                    start: null,
-                    end: null,
-                    is_holiday: true,
-                    is_confirmed: prev[key]?.is_confirmed ?? false,
-                },
-            }));
 
             const res = await fetch("/api/shift/submit", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    date: key,
-                    start: null,
-                    end: null,
-                    is_holiday: true,
+                date: key,
+                start: null,
+                end: null,
+                is_holiday: true,
                 }),
             });
 
@@ -263,10 +201,10 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
 
             if (!res.ok) {
                 alert(json.error ?? "休み希望の保存に失敗しました");
-                setIsSyncing(false);
                 return;
             }
 
+            await fetchShiftsFromDB();
             setSelectedDate(null);
         });
     }
