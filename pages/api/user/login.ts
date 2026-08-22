@@ -22,17 +22,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+  const supabaseClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   // -----------------------------
   // ① userId でユーザー検索
   // -----------------------------
-  const { data: user, error: userError } = await supabaseAdmin
+  const { data: user } = await supabaseAdmin
     .from("profiles")
     .select("id, password_hash")
     .eq("user_id", userId)
     .maybeSingle();
-
-  console.log("user:", user);
-  console.log("userError:", userError);
 
   if (!user) {
     return res.status(401).json({ error: "ユーザーIDまたはパスワードが違います" });
@@ -48,24 +50,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // -----------------------------
-  // ③ セッション発行
+  // ③ Supabase Auth に裏ログイン（JWT発行）
+  // -----------------------------
+  const email = `${userId}@local`; // 影ユーザーのメール
+
+  const { data: authLogin, error: authError } =
+    await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+  if (authError) {
+    console.error("Auth login error:", authError);
+    return res.status(500).json({ error: "Auth login failed" });
+  }
+
+  // JWT は supabaseClient.auth.getSession() で取得可能
+  // フロント側で自動的に保持される
+
+  // -----------------------------
+  // ④ 自作セッション発行
   // -----------------------------
   const token = randomBytes(32).toString("hex");
 
   await supabaseAdmin.from("user_sessions").insert({
     token,
-    user_id: user.id,
+    user_id: user.id, // ← profiles.id（＝auth.uid）
   });
 
   // -----------------------------
-  // ④ Cookie 保存
+  // ⑤ Cookie 保存
   // -----------------------------
   res.setHeader(
     "Set-Cookie",
     serialize("user_session", token, {
       httpOnly: true,
       path: "/",
-      maxAge: 60 * 60 * 24 * 365, // 一年間保持
+      maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     })

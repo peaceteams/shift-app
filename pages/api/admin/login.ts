@@ -1,9 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { supabaseApi } from "@/lib/supabase/api";
+import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { serialize } from "cookie";
-import jwt from "jsonwebtoken";
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,8 +14,13 @@ export default async function handler(
 
   const { password } = req.body;
 
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   // 管理者レコードを取得（1件だけ）
-  const { data: admin } = await supabaseApi
+  const { data: admin, error } = await supabaseAdmin
     .from("admins")
     .select("id, password_hash")
     .single();
@@ -26,44 +30,28 @@ export default async function handler(
   }
 
   const ok = await bcrypt.compare(password, admin.password_hash);
+
   if (!ok) {
     return res.status(401).json({ error: "パスワードが違います" });
   }
 
-  // セッショントークン発行（従来の仕組み）
+  // セッショントークン発行
   const token = randomBytes(32).toString("hex");
 
-  await supabaseApi.from("admin_sessions").insert({
+  await supabaseAdmin.from("admin_sessions").insert({
     token,
     admin_id: admin.id,
   });
 
-  // ★ JWT 発行（RLS 用）
-  const adminJwt = jwt.sign(
-    {
-      aud: "authenticated",   // ← これが必須！
-      sub: admin.id,          // admins.id の uuid
-      role: "admin",          // 管理者判定
-    },
-    process.env.JWT_SECRET!,
-    { expiresIn: "7d" }
-  );
-
-  // ★ Cookie に保存（JWT は supabase-auth-token に変更）
-  res.setHeader("Set-Cookie", [
+  // Cookie に保存
+  res.setHeader(
+    "Set-Cookie",
     serialize("admin_session", token, {
       httpOnly: true,
       path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    }),
-    serialize(`sb-${process.env.NEXT_PUBLIC_SUPABASE_PROJECT_REF}-auth-token`, adminJwt, {
-      httpOnly: false,
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 7, // 7日
     })
-  ]);
+  );
 
   return res.json({ ok: true });
 }
