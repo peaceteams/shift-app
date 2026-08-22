@@ -76,24 +76,42 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
         console.log("🔌 Realtime チャンネル作成開始");
 
         const channel = supabaseClient.channel("shift-rt-user");
+
         channel.on(
             "postgres_changes",
             { event: "*", schema: "public", table: "shift_requests" },
             (payload) => {
-                console.log("🔥 Realtime受信:", payload);
+                console.log("🔥 Realtime受信:", {
+                event: payload.eventType,
+                new: payload.new,
+                old: payload.old,
+                raw: payload,
+            });
 
-                // 👇 payload.new を any として扱う（TSエラーを完全に消す）
-                const row = (payload.new ?? payload.old) as any;
+            const row = (payload.new ?? payload.old) as any;
 
-                if (!row) return;
-                if (!row.user_id) return;
-                if (row.user_id !== user.id) return;
-
-                wrap(async () => {
-                await fetchShiftsFromDB();
-                setIsSyncing(false);
-                });
+            if (!row) {
+                console.log("⚠ row が空 → RLS でブロックされている可能性");
+                return;
             }
+
+            if (!row.user_id) {
+                console.log("⚠ user_id が無い → Realtime の old/new が空の可能性");
+                return;
+            }
+
+            if (row.user_id !== user.id) {
+                console.log("⚠ 他ユーザーのイベントなので無視");
+                return;
+            }
+
+            wrap(async () => {
+                console.log("📥 Realtime → fetchShiftsFromDB 実行");
+                await fetchShiftsFromDB();
+                console.log("📤 Realtime → fetchShiftsFromDB 完了");
+                setIsSyncing(false);
+            });
+        }
         );
 
         channel.subscribe((status) => {
@@ -101,11 +119,6 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
         });
 
         console.log("🔌 Realtime チャンネル作成完了");
-
-        return () => {
-            console.log("🔌 Realtime チャンネル解除");
-            supabaseClient.removeChannel(channel);
-        };
     }, [user]);
 
     async function fetchShiftsFromDB() {
@@ -158,62 +171,32 @@ export default function ShiftSubmitPage({ user }: { user: any }) {
         }
 
         await wrap(async () => {
-            // 🟥 ① ロックチェック
-            const { data: lock } = await supabaseClient
-            .from("shift_sync_state")
-            .select("sync_locked")
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-            if (!lock) {
-            alert("Lock state not found");
-            setIsSyncing(false);
-            return;
-            }
-
-            if (lock.sync_locked) {
-            alert("現在あなたのシフトは同期中のため変更できません。");
-            setIsSyncing(false);
-            return;
-            }
-
-            // 🟦 ② ロックON
-            await supabaseClient
-            .from("shift_sync_state")
-            .update({
-                sync_locked: true,
-                locked_by: user.id,
-                locked_at: new Date(),
-            })
-            .eq("user_id", user.id);
-
-            // 🟩 ③ 既存削除
-            await supabaseClient
-            .from("shift_requests")
-            .delete()
-            .eq("user_id", user.id)
-            .eq("date", key);
-
-            // 🟩 ④ 新規保存（Realtime が確実に飛ぶ）
-            await supabaseClient
-            .from("shift_requests")
-            .insert({
-                user_id: user.id,
-                date: key,
-                start_time: start,
-                end_time: end,
-                is_holiday: false,
+            const res = await fetch("/api/shift/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    date: key,
+                    start,
+                    end,
+                    is_holiday: false,
+                }),
             });
 
-            // 🟦 ⑤ ロックOFF
-            await supabaseClient
-            .from("shift_sync_state")
-            .update({
-                sync_locked: false,
-                locked_by: null,
-                locked_at: null,
-            })
-            .eq("user_id", user.id);
+            const json = await res.json();
+
+            if (!res.ok) {
+                alert(json.error ?? "保存に失敗しました");
+                setIsSyncing(false);
+                return;
+            }
+
+            console.log("✅ API /shift/submit 完了 → DB 書き込み完了が保証された");
+
+            // API 完了時点で DB 書き込みは確定している
+            // Realtime が飛べば UI が自動更新される
+            // 飛ばなくても fetchShiftsFromDB を呼べば確実に反映される
+
+            await fetchShiftsFromDB();
 
             setSelectedDate(null);
         });
