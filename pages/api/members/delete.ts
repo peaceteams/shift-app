@@ -13,28 +13,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "Missing id" });
   }
 
-  // -----------------------------
-  // ① profiles から削除
-  // -----------------------------
-  const { error: profileError } = await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from("profiles")
     .delete()
     .eq("id", id);
 
-  if (profileError) {
-    return res.status(500).json({ error: profileError.message });
-  }
-
-  // -----------------------------
-  // ② shift_sync_state からも削除（ユーザー単位ロック行）
-  // -----------------------------
-  const { error: syncError } = await supabaseAdmin
-    .from("shift_sync_state")
-    .delete()
-    .eq("user_id", id);
-
-  if (syncError) {
-    return res.status(500).json({ error: syncError.message });
+  if (error) {
+    return res.status(500).json({ error: error.message });
   }
 
   return res.status(200).json({ success: true });
