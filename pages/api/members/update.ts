@@ -1,34 +1,61 @@
 // /pages/api/members/update.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import bcrypt from "bcryptjs";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { id, name, discord_id, user_id, password } = req.body;
+  // -----------------------------
+  // ① Cookie 認証（admin_session）
+  // -----------------------------
+  const token = req.cookies["admin_session"];
+  if (!token) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  // -----------------------------
+  // ② セッション確認
+  // -----------------------------
+  const { data: session } = await supabaseAdmin
+    .from("admin_sessions")
+    .select("admin_id")
+    .eq("token", token)
+    .maybeSingle();
+
+  if (!session) {
+    return res.status(401).json({ error: "Invalid session" });
+  }
+
+  // -----------------------------
+  // ③ 管理者チェック
+  // -----------------------------
+  const { data: admin } = await supabaseAdmin
+    .from("admins")
+    .select("id")
+    .eq("id", session.admin_id)
+    .maybeSingle();
+
+  if (!admin) {
+    return res.status(403).json({ error: "Not admin" });
+  }
+
+  // -----------------------------
+  // ④ 更新処理（profiles）
+  // -----------------------------
+  const { id, name, discord_id } = req.body;
 
   if (!id) {
     return res.status(400).json({ error: "Missing id" });
   }
 
-  // 更新データをまとめる
-  const updateData: any = {
-    name,
-    discord_id: discord_id || null,
-    user_id: user_id?.toString() ?? null,
-  };
-
-  // パスワードが入力されていたらハッシュ化して更新
-  if (password && password.trim() !== "") {
-    updateData.password_hash = await bcrypt.hash(password, 10);
-  }
-
   const { data, error } = await supabaseAdmin
     .from("profiles")
-    .update(updateData)
+    .update({
+      name,
+      discord_id: discord_id || null,
+    })
     .eq("id", id)
     .select()
     .single();
@@ -37,5 +64,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: error.message });
   }
 
-  return res.status(200).json({ member: data });
+  return res.status(200).json({ success: true, member: data });
 }

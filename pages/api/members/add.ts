@@ -53,48 +53,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "name, userId, password は必須です" });
   }
 
-  // パスワードをハッシュ化（自作認証用）
+  // パスワードをハッシュ化
   const passwordHash = await bcrypt.hash(password, 10);
 
   // -----------------------------
-  // ⑤ Supabase Auth に影のユーザーを作成
-  // -----------------------------
-  const email = `${userId}@local`; // ダミーでOK
-
-  const { data: authUser, error: authError } =
-    await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-    });
-
-  if (authError) {
-    console.error("Auth create error:", authError);
-    return res.status(500).json({ error: "Auth user creation failed" });
-  }
-
-  const authUid = authUser.user.id; // ← これが profiles.id になる
-
-  // -----------------------------
-  // ⑥ profiles に挿入（id = auth.uid）
+  // ⑤ profiles に直接挿入
   // -----------------------------
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from("profiles")
     .insert({
-      id: authUid, // ← Auth の uid を使う
       name,
       discord_id: discord_id || null,
-      user_id: userId.toString(), // 自作ログイン用ID
-      password_hash: passwordHash, // 自作ログイン用パスワード
+      user_id: userId.toString(),
+      password_hash: passwordHash,
     })
     .select()
     .single();
 
   if (insertError) {
     console.error("profiles insert error:", insertError);
-
-    // Auth側だけ作られてしまった場合は削除する
-    await supabaseAdmin.auth.admin.deleteUser(authUid);
-
     return res.status(500).json({ error: insertError.message });
   }
 
