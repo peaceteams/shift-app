@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { serialize } from "cookie";
@@ -17,18 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "userId と password は必須です" });
   }
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const supabaseClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   // -----------------------------
-  // ① userId でユーザー検索
+  // ① userId でユーザー検索（自作認証）
   // -----------------------------
   const { data: user } = await supabaseAdmin
     .from("profiles")
@@ -41,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // -----------------------------
-  // ② パスワード照合
+  // ② パスワード照合（自作認証）
   // -----------------------------
   const ok = await bcrypt.compare(password, user.password_hash);
 
@@ -50,36 +40,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // -----------------------------
-  // ③ Supabase Auth に裏ログイン（JWT発行）
-  // -----------------------------
-  const email = `${userId}@local`; // 影ユーザーのメール
-
-  const { data: authLogin, error: authError } =
-    await supabaseClient.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-  if (authError) {
-    console.error("Auth login error:", authError);
-    return res.status(500).json({ error: "Auth login failed" });
-  }
-
-  // JWT は supabaseClient.auth.getSession() で取得可能
-  // フロント側で自動的に保持される
-
-  // -----------------------------
-  // ④ 自作セッション発行
+  // ③ 自作セッション発行
   // -----------------------------
   const token = randomBytes(32).toString("hex");
 
   await supabaseAdmin.from("user_sessions").insert({
     token,
-    user_id: user.id, // ← profiles.id（＝auth.uid）
+    user_id: user.id, // profiles.id（UUID）
   });
 
   // -----------------------------
-  // ⑤ Cookie 保存
+  // ④ Cookie 保存
   // -----------------------------
   res.setHeader(
     "Set-Cookie",
