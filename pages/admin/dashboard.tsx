@@ -1,23 +1,29 @@
-import { useState, useEffect, useMemo } from "react";
+// /pages/admin/dashboard.tsx など
+
+import { useState, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
-import { supabaseClient } from "@/lib/supabase/client";
-import { supabaseApi } from "@/lib/supabase/api";
 import { useRouter } from "next/router";
+import { supabaseApi } from "@/lib/supabase/api";
 
 type Member = {
-  id: string;
-  user_id: string;
+  id: string;        // profiles.id（UUID）
+  user_id: string;   // 自作ログインID
   name: string;
   discord_id: string | null;
 };
 
-export default function AdminDashboard({ user, initialMembers, initialLinks }: any) {
+type Props = {
+  user: any;
+  initialMembers: Member[];
+  initialLinks: Record<string, string>;
+};
+
+export default function AdminDashboard({ user, initialMembers, initialLinks }: Props) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [linkMap, setLinkMap] = useState<Record<string, string>>(initialLinks);
 
-  const [search, setSearch] = useState("")
-  
-  const router = useRouter();;
+  const [search, setSearch] = useState("");
+  const router = useRouter();
 
   const filteredMembers = useMemo(() => {
     const q = search.toLowerCase();
@@ -30,162 +36,40 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     });
   }, [search, members]);
 
-  //追加モーダル
+  // 追加モーダル
   const [adding, setAdding] = useState(false);
   const [addUserId, setAddUserId] = useState("");
   const [addPassword, setAddPassword] = useState("");
   const [addName, setAddName] = useState("");
   const [addDiscord, setAddDiscord] = useState("");
-  
-  //編集モーダル
+
+  // 編集モーダル
   const [editing, setEditing] = useState<Member | null>(null);
   const [editUserId, setEditUserId] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [editName, setEditName] = useState("");
   const [editDiscord, setEditDiscord] = useState("");
 
-  //コピー吹き出し
+  // コピー吹き出し
   const [bubbleMap, setBubbleMap] = useState<{ [id: string]: "show" | "hide" | null }>({});
 
   // ---------------------------------------------------------
-  // 🔌 Realtime: メンバー & ワンタイムリンク
-  // ---------------------------------------------------------
-  useEffect(() => {
-    // Strict Mode 対策：初回だけ実行
-    if ((window as any).__realtimeSubscribed) return;
-    (window as any).__realtimeSubscribed = true;
-
-    // console.log("🔌 Realtime 初期化開始");
-
-    // -----------------------------
-    // profiles
-    // -----------------------------
-    const profilesChannel = supabaseClient
-      .channel("profiles-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "profiles" },
-        (payload: any) => {
-          console.log("📡 [profiles] Realtime 受信:", payload);
-
-          const newRow = payload.new as Member | null;
-          const oldRow = payload.old as Member | null;
-
-          setMembers((prev) => {
-            console.log("📘 [profiles] 更新前 members:", prev);
-
-            switch (payload.eventType) {
-              case "INSERT":
-                console.log("➕ INSERT:", newRow);
-                return newRow ? [...prev, newRow] : prev;
-
-              case "UPDATE":
-                console.log("♻ UPDATE:", newRow);
-                return newRow
-                  ? prev.map((m) => (m.id === newRow.id ? newRow : m))
-                  : prev;
-
-              case "DELETE":
-                console.log("🗑 DELETE:", oldRow);
-                return oldRow
-                  ? prev.filter((m) => m.id !== oldRow.id)
-                  : prev;
-
-              default:
-                console.log("❓ 未知イベント:", payload.eventType);
-                return prev;
-            }
-          });
-        }
-      )
-      .subscribe((status) => {
-        // console.log("🔌 profiles-realtime subscribe 状態:", status);
-      });
-
-    // -----------------------------
-    // shift_links
-    // -----------------------------
-    const linksChannel = supabaseClient
-      .channel("shift-links-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "shift_links" },
-        (payload: any) => {
-          // console.log("📡 [shift_links] Realtime 受信:", payload);
-
-          const newRow = payload.new as { user_id: string; token: string } | null;
-
-          setLinkMap((prev) => {
-            // console.log("📘 [shift_links] 更新前 linkMap:", prev);
-
-            switch (payload.eventType) {
-              case "INSERT":
-                // console.log("📘 [shift_links] 作成 linkMap:", prev);
-              case "UPDATE":
-                // console.log("♻ INSERT/UPDATE:", newRow);
-                if (!newRow) return prev;
-                // console.log("📘 [shift_links] 更新後 linkMap:", prev);
-                return {
-                  ...prev,
-                  [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
-                };
-
-              case "DELETE":
-                setLinkMap((prev) => {
-                  const oldToken = payload.old?.token;
-
-                  // token が無ければ prev を返す（undefined は返さない）
-                  if (!oldToken) {
-                    return prev;
-                  }
-
-                  // token → user_id の逆引き
-                  const userId = Object.keys(prev).find((uid) =>
-                    prev[uid]?.includes(oldToken)
-                  );
-
-                  // userId が見つからなければ prev を返す
-                  if (!userId) {
-                    return prev;
-                  }
-
-                  // ここまで来たら確実に更新
-                  const updated = { ...prev };
-                  delete updated[userId];
-                  return updated;
-                });
-              
-              default:
-                // console.log("❓ 未知イベント:", payload.eventType);
-                return prev;
-            }
-          });
-        }
-      )
-      .subscribe((status) => {
-        // console.log("🔌 shift-links-realtime subscribe 状態:", status);
-      });
-
-    return () => {
-      // console.log("🔌 Realtime チャンネル解除");
-      supabaseClient.removeChannel(profilesChannel);
-      supabaseClient.removeChannel(linksChannel);
-    };
-  }, []);
-  
-  // ---------------------------------------------------------
-  // 👤メンバー追加
+  // 👤 メンバー追加
   // ---------------------------------------------------------
   function openAddModal() {
     setAdding(true);
     setAddName("");
     setAddDiscord("");
+    setAddUserId("");
+    setAddPassword("");
   }
 
   function closeAddModal() {
     setAdding(false);
     setAddName("");
     setAddDiscord("");
+    setAddUserId("");
+    setAddPassword("");
   }
 
   async function addMember() {
@@ -201,11 +85,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     });
 
     let json: any = null;
-
     try {
       json = await res.json();
     } catch {
-      // JSON parse error
+      // JSON parse error は無視
     }
 
     if (!res.ok) {
@@ -213,15 +96,17 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       return;
     }
 
-    // 成功処理
+    // ここではまだ API通知システムを入れないので、
+    // members の更新は後で API通知導入時に対応する想定。
     setAddUserId("");
     setAddPassword("");
     setAddName("");
     setAddDiscord("");
+    setAdding(false);
   }
-  
+
   // ---------------------------------------------------------
-  // 👤 メンバー削除
+  // 👤 メンバー削除（setMembers あり）
   // ---------------------------------------------------------
   async function deleteMember(id: string) {
     if (!confirm("本当に削除しますか？")) return;
@@ -236,6 +121,9 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       alert("削除に失敗しました");
       return;
     }
+
+    // Realtime を削除しているので、削除後は手動で members を更新する
+    setMembers((prev) => prev.filter((m) => m.id !== id));
   }
 
   // ---------------------------------------------------------
@@ -249,10 +137,18 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     setEditPassword("");
   }
 
+  function closeEditModal() {
+    setEditing(null);
+    setEditName("");
+    setEditDiscord("");
+    setEditUserId("");
+    setEditPassword("");
+  }
+
   async function saveEdit() {
     if (!editing) return;
 
-    await fetch("/api/members/update", {
+    const res = await fetch("/api/members/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -264,6 +160,13 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       }),
     });
 
+    if (!res.ok) {
+      alert("更新に失敗しました");
+      return;
+    }
+
+    // ここも今は API通知システムを入れないので、
+    // members の更新は後で導入する想定。
     setEditing(null);
   }
 
