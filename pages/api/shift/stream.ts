@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-let clients: NextApiResponse[] = [];
+// 🔥 ここで export する（notify.ts から使う）
+export const clients: NextApiResponse[] = [];
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // SSE のヘッダー
+  // SSE ヘッダー
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -16,6 +17,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   // 接続が切れたら削除
   req.on("close", () => {
-    clients = clients.filter((client) => client !== res);
+    const index = clients.indexOf(res);
+    if (index !== -1) clients.splice(index, 1);
   });
 }
