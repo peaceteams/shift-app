@@ -52,32 +52,67 @@ export default function AllShiftPage() {
 
         run();
 
-        // 🔥 Supabase Realtime 削除 → SSE に置き換え
-        const eventSource = new EventSource("/api/shift/stream");
+        let es: EventSource | null = null;
 
-        eventSource.onmessage = (event) => {
-            console.log("SSE:", event.data);
-            try {
-                const data = JSON.parse(event.data);
+        function connect() {
+            // 既存接続が残っていたら確実に閉じる
+            if (es) {
+                console.log("[SSE] closing old connection");
+                es.close();
+            }
+
+            console.log("[SSE] connecting...");
+            es = new EventSource("/api/shift/stream");
+
+            es.onopen = () => {
+                console.log("[SSE] connection opened");
+            };
+
+            es.onmessage = (event) => {
+                console.log("[SSE] raw:", event.data);
+
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch {
+                    console.log("[SSE] JSON parse error");
+                    return;
+                }
+
+                // ping は無視
+                if (data.type === "ping") return;
+
+                if (data.type === "connected") {
+                    console.log("[SSE] connected message received");
+                    return;
+                }
 
                 if (data.type === "shift_updated") {
-                    run(); // ← 通知が来たら再読み込み
+                    console.log("[SSE] shift_updated received → run()");
+                    run();
                 }
-            } catch (e) {
-                console.error("SSE parse error", e);
-            }
-        };
-            eventSource.onerror = () => {
-            console.error("SSE connection lost");
-        };
+            };
+
+            es.onerror = (err) => {
+                console.log("[SSE] error:", err);
+                console.log("[SSE] reconnecting in 1s...");
+                es?.close();
+                setTimeout(connect, 1000);
+            };
+        }
+
+        // 初回接続
+        connect();
 
         window.addEventListener("resize", adjustScale);
 
         return () => {
-            eventSource.close();
+            console.log("[SSE] cleanup: closing connection");
+            es?.close();
             window.removeEventListener("resize", adjustScale);
         };
     }, [startDate, endDate]);
+
 
     async function load() {
         const res = await fetch("/api/admin/list", {
