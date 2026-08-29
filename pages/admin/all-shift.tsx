@@ -56,6 +56,7 @@ export default function AllShiftPage() {
         const eventSource = new EventSource("/api/shift/stream");
 
         eventSource.onmessage = (event) => {
+            console.log("SSE:", event.data);
             try {
                 const data = JSON.parse(event.data);
 
