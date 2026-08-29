@@ -55,7 +55,6 @@ export default function AllShiftPage() {
         let es: EventSource | null = null;
 
         function connect() {
-            // 既存接続が残っていたら確実に閉じる
             if (es) {
                 console.log("[SSE] closing old connection");
                 es.close();
@@ -79,13 +78,8 @@ export default function AllShiftPage() {
                     return;
                 }
 
-                // ping は無視
                 if (data.type === "ping") return;
-
-                if (data.type === "connected") {
-                    console.log("[SSE] connected message received");
-                    return;
-                }
+                if (data.type === "connected") return;
 
                 if (data.type === "shift_updated") {
                     console.log("[SSE] shift_updated received → run()");
@@ -101,7 +95,6 @@ export default function AllShiftPage() {
             };
         }
 
-        // 初回接続
         connect();
 
         window.addEventListener("resize", adjustScale);
@@ -111,8 +104,16 @@ export default function AllShiftPage() {
             es?.close();
             window.removeEventListener("resize", adjustScale);
         };
-    }, [startDate, endDate]);
+    }, []);
 
+    useEffect(() => {
+        async function run() {
+            await load();
+            adjustScale();
+        }
+
+        run();
+    }, [startDate, endDate]);
 
     async function load() {
         const res = await fetch("/api/admin/list", {
