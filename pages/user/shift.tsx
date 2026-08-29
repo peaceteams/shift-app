@@ -26,6 +26,15 @@ function trimSeconds(time: string) {
     return time.slice(0, 5); // "20:00:00" → "20:00"
 }
 
+// API通知
+async function notifyShiftUpdated() {
+    await fetch("/api/shift/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "shift_updated" }),
+    });
+}
+
 export default function ShiftSubmitPage() {
     // 選択した日付
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -130,12 +139,6 @@ export default function ShiftSubmitPage() {
 
         setSaving(true);
 
-        // ローカル更新
-        setShifts((prev) => ({
-            ...prev,
-            [key]: { start, end },
-        }));
-
         // API 保存
         const res = await fetch("/api/shift/submit", {
             method: "POST",
@@ -154,6 +157,15 @@ export default function ShiftSubmitPage() {
             alert(json.error ?? "保存に失敗しました");
             return;
         }
+
+        // ローカル更新
+        setShifts((prev) => ({
+            ...prev,
+            [key]: { start, end },
+        }));
+
+        // ★ 通知送信
+        await notifyShiftUpdated();
 
         setSelectedDate(null);
     }
@@ -178,6 +190,9 @@ export default function ShiftSubmitPage() {
             return;
         }
 
+        // ★ 通知送信
+        await notifyShiftUpdated();
+
         setShifts((prev) => {
             const copy = { ...prev };
             delete copy[key];
@@ -194,17 +209,6 @@ export default function ShiftSubmitPage() {
         const key = selectedDate.toLocaleDateString("sv-SE");
 
         setSaving(true);
-
-        // ローカル更新
-        setShifts((prev) => ({
-            ...prev,
-            [key]: {
-                start: null,
-                end: null,
-                is_holiday: true,
-                is_confirmed: prev[key]?.is_confirmed ?? false,
-            },
-        }));
 
         // API 保存
         const res = await fetch("/api/shift/submit", {
@@ -225,6 +229,20 @@ export default function ShiftSubmitPage() {
             alert(json.error ?? "休み希望の保存に失敗しました");
             return;
         }
+
+        // ローカル更新
+        setShifts((prev) => ({
+            ...prev,
+            [key]: {
+                start: null,
+                end: null,
+                is_holiday: true,
+                is_confirmed: prev[key]?.is_confirmed ?? false,
+            },
+        }));
+
+        // ★ 通知送信
+        await notifyShiftUpdated();
 
         setSelectedDate(null);
     }
