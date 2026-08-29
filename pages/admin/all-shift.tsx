@@ -2,26 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
-import { supabaseClient } from "@/lib/supabase/client";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     const auth = await requireAdmin(ctx);
 
-  if (!auth.ok) {
-    return auth.redirect;
-  }
+    if (!auth.ok) {
+        return auth.redirect;
+    }
 
-  return {
-    props: {
-        admin: auth.user,
-    },
-  };
+    return {
+        props: {
+            admin: auth.user,
+        },
+    };
 };
 
 function formatTime(t?: string) {
     if (!t) return "–";
-    return t.slice(0, 5); // "HH:MM"
+    return t.slice(0, 5);
 }
 
 export default function AllShiftPage() {
@@ -47,30 +46,37 @@ export default function AllShiftPage() {
 
     useEffect(() => {
         async function run() {
-            await load();      // データ読み込み
-            adjustScale();     // 読み込み後に縮小処理
+            await load();
+            adjustScale();
         }
 
         run();
 
-        const channel = supabaseClient
-            .channel("shift-rt")
-            .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "shift_requests" },
-            () => {
-                run(); // リアルタイム更新時も縮小し直す
+        // 🔥 Supabase Realtime 削除 → SSE に置き換え
+        const eventSource = new EventSource("/api/shift/stream");
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.type === "shift_updated") {
+                    run(); // ← 通知が来たら再読み込み
+                }
+            } catch (e) {
+                console.error("SSE parse error", e);
             }
-            )
-            .subscribe();
+        };
+            eventSource.onerror = () => {
+            console.error("SSE connection lost");
+        };
 
         window.addEventListener("resize", adjustScale);
 
         return () => {
-            supabaseClient.removeChannel(channel);
+            eventSource.close();
             window.removeEventListener("resize", adjustScale);
         };
-    }, [startDate, endDate]); // ← 期間変更時にも縮小し直す
+    }, [startDate, endDate]);
 
     async function load() {
         const res = await fetch("/api/admin/list", {
