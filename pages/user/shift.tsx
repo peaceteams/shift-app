@@ -72,23 +72,6 @@ export default function ShiftSubmitPage() {
     useEffect(() => {
         setMounted(true);
         fetchShiftsFromDB();
-
-        // ★ Realtime 購読
-        const channel = supabaseClient
-            .channel("shift-rt-user")
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "shift_requests" },
-                () => {
-                    console.log("🔥Realtime受信")
-                    fetchShiftsFromDB(); // ← 変更があれば即再取得
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabaseClient.removeChannel(channel);
-        };
     }, []);
 
     async function fetchShiftsFromDB() {
