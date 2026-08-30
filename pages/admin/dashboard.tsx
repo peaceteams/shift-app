@@ -48,131 +48,46 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   //コピー吹き出し
   const [bubbleMap, setBubbleMap] = useState<{ [id: string]: "show" | "hide" | null }>({});
 
-  // ---------------------------------------------------------
-  // 🔌 Realtime: メンバー & ワンタイムリンク
-  // ---------------------------------------------------------
+  async function refreshDashboard() {
+    log("🔄 ダッシュボード最新データ取得");
+
+    const res = await fetch("/api/dashboard/get");
+    const json = await res.json();
+
+    setMembers(json.members);
+    setLinkMap(json.linkMap);
+  }
+
   useEffect(() => {
-    // Strict Mode 対策：初回だけ実行
-    if ((window as any).__realtimeSubscribed) return;
-    (window as any).__realtimeSubscribed = true;
+    const eventSource = new EventSource("/api/stream");
 
-    // log("🔌 Realtime 初期化開始");
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-    // -----------------------------
-    // profiles
-    // -----------------------------
-    const profilesChannel = supabaseClient
-      .channel("profiles-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "profiles" },
-        (payload: any) => {
-          log("📡 [profiles] Realtime 受信:", payload);
-
-          const newRow = payload.new as Member | null;
-          const oldRow = payload.old as Member | null;
-
-          setMembers((prev) => {
-            log("📘 [profiles] 更新前 members:", prev);
-
-            switch (payload.eventType) {
-              case "INSERT":
-                log("➕ INSERT:", newRow);
-                return newRow ? [...prev, newRow] : prev;
-
-              case "UPDATE":
-                log("♻ UPDATE:", newRow);
-                return newRow
-                  ? prev.map((m) => (m.id === newRow.id ? newRow : m))
-                  : prev;
-
-              case "DELETE":
-                log("🗑 DELETE:", oldRow);
-                return oldRow
-                  ? prev.filter((m) => m.id !== oldRow.id)
-                  : prev;
-
-              default:
-                log("❓ 未知イベント:", payload.eventType);
-                return prev;
-            }
-          });
-        }
-      )
-      .subscribe((status) => {
-        // log("🔌 profiles-realtime subscribe 状態:", status);
-      });
-
-    // -----------------------------
-    // shift_links
-    // -----------------------------
-    const linksChannel = supabaseClient
-      .channel("shift-links-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "shift_links" },
-        (payload: any) => {
-          // log("📡 [shift_links] Realtime 受信:", payload);
-
-          const newRow = payload.new as { user_id: string; token: string } | null;
-
-          setLinkMap((prev) => {
-            // log("📘 [shift_links] 更新前 linkMap:", prev);
-
-            switch (payload.eventType) {
-              case "INSERT":
-                // log("📘 [shift_links] 作成 linkMap:", prev);
-              case "UPDATE":
-                // log("♻ INSERT/UPDATE:", newRow);
-                if (!newRow) return prev;
-                // log("📘 [shift_links] 更新後 linkMap:", prev);
-                return {
-                  ...prev,
-                  [newRow.user_id]: `${process.env.NEXT_PUBLIC_APP_URL}/shift/${newRow.token}`,
-                };
-
-              case "DELETE":
-                setLinkMap((prev) => {
-                  const oldToken = payload.old?.token;
-
-                  // token が無ければ prev を返す（undefined は返さない）
-                  if (!oldToken) {
-                    return prev;
-                  }
-
-                  // token → user_id の逆引き
-                  const userId = Object.keys(prev).find((uid) =>
-                    prev[uid]?.includes(oldToken)
-                  );
-
-                  // userId が見つからなければ prev を返す
-                  if (!userId) {
-                    return prev;
-                  }
-
-                  // ここまで来たら確実に更新
-                  const updated = { ...prev };
-                  delete updated[userId];
-                  return updated;
-                });
-              
-              default:
-                // log("❓ 未知イベント:", payload.eventType);
-                return prev;
-            }
-          });
-        }
-      )
-      .subscribe((status) => {
-        // log("🔌 shift-links-realtime subscribe 状態:", status);
-      });
-
-    return () => {
-      // log("🔌 Realtime チャンネル解除");
-      supabaseClient.removeChannel(profilesChannel);
-      supabaseClient.removeChannel(linksChannel);
+      if (data.type === "dashboard_updated") {
+        log("📡 ダッシュボード更新通知受信");
+        refreshDashboard(); // 最新データを再取得
+      }
     };
+
+    eventSource.onerror = () => {
+      log("⚠ SSE 切断 → 再接続");
+      eventSource.close();
+      setTimeout(() => {
+        const es = new EventSource("/api/stream");
+      }, 1000);
+    };
+
+    return () => eventSource.close();
   }, []);
+
+  async function notifyShiftUpdated() {
+    await fetch("/api/shift/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "dashboard_updated" }),
+    });
+  }
   
   // ---------------------------------------------------------
   // 👤メンバー追加
@@ -214,6 +129,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       return;
     }
 
+    await notifyShiftUpdated();
+
     // 成功処理
     setAddUserId("");
     setAddPassword("");
@@ -237,6 +154,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       alert("削除に失敗しました");
       return;
     }
+
+    await notifyShiftUpdated()
   }
 
   // ---------------------------------------------------------
@@ -264,6 +183,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         discord_id: editDiscord,
       }),
     });
+
+    await notifyShiftUpdated();
 
     setEditing(null);
   }

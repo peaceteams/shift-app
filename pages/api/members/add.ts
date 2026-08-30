@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import bcrypt from "bcryptjs";
+import { log } from "@/utils/logger";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   log("▶ API /members/add START");
@@ -74,6 +75,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error("profiles insert error:", insertError);
     return res.status(500).json({ error: insertError.message });
   }
+
+  log("▶ API /members/add COMPLETE");
 
   return res.status(200).json({
     ok: true,
