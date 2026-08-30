@@ -1,5 +1,6 @@
 import { GetServerSidePropsContext } from "next";
 import { supabaseApi } from "@/lib/supabase/api";
+import { log } from "@/utils/logger";
 
 export async function requireAdmin(ctx: GetServerSidePropsContext) {
   log("▶ SSR 認証開始");
