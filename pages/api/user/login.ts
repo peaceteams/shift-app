@@ -3,9 +3,10 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { serialize } from "cookie";
+import { log } from "@/utils/logger";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log("▶ API /user/login START");
+  log("▶ API /user/login START");
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });

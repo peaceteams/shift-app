@@ -2,16 +2,16 @@ import { GetServerSidePropsContext } from "next";
 import { supabaseApi } from "@/lib/supabase/api";
 
 export async function requireAdmin(ctx: GetServerSidePropsContext) {
-  console.log("▶ SSR 認証開始");
+  log("▶ SSR 認証開始");
 
   const cookies = ctx.req.cookies;
-  console.log("▶ SSR Cookie:", cookies);
+  log("▶ SSR Cookie:", cookies);
 
   const token = cookies["admin_session"];
-  console.log("▶ SSR admin_session:", token);
+  log("▶ SSR admin_session:", token);
 
   if (!token) {
-    console.log("❌ admin_session が SSR に届いていない");
+    log("❌ admin_session が SSR に届いていない");
     return {
       ok: false,
       redirect: { destination: "/admin/login", permanent: false },
@@ -25,10 +25,10 @@ export async function requireAdmin(ctx: GetServerSidePropsContext) {
     .eq("token", token)
     .maybeSingle();
 
-  console.log("▶ session:", session);
+  log("▶ session:", session);
 
   if (!session) {
-    console.log("❌ admin_sessions に該当セッションなし");
+    log("❌ admin_sessions に該当セッションなし");
     return {
       ok: false,
       redirect: { destination: "/admin/login", permanent: false },
@@ -43,14 +43,14 @@ export async function requireAdmin(ctx: GetServerSidePropsContext) {
     .maybeSingle();
 
   if (!admin) {
-    console.log("❌ admins に該当管理者なし");
+    log("❌ admins に該当管理者なし");
     return {
       ok: false,
       redirect: { destination: "/admin/login", permanent: false },
     };
   }
 
-  console.log("✅ SSR 認証成功");
+  log("✅ SSR 認証成功");
 
   return {
     ok: true,

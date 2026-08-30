@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
+import { log } from "@/utils/logger";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     const auth = await requireAdmin(ctx);
@@ -56,25 +57,25 @@ export default function AllShiftPage() {
 
         function connect() {
             if (es) {
-                console.log("[SSE] closing old connection");
+                log("[SSE] closing old connection");
                 es.close();
             }
 
-            console.log("[SSE] connecting...");
+            log("[SSE] connecting...");
             es = new EventSource("/api/shift/stream");
 
             es.onopen = () => {
-                console.log("[SSE] connection opened");
+                log("[SSE] connection opened");
             };
 
             es.onmessage = (event) => {
-                console.log("[SSE] raw:", event.data);
+                log("[SSE] raw:", event.data);
 
                 let data;
                 try {
                     data = JSON.parse(event.data);
                 } catch {
-                    console.log("[SSE] JSON parse error");
+                    log("[SSE] JSON parse error");
                     return;
                 }
 
@@ -82,14 +83,14 @@ export default function AllShiftPage() {
                 if (data.type === "connected") return;
 
                 if (data.type === "shift_updated") {
-                    console.log("[SSE] shift_updated received → run()");
+                    log("[SSE] shift_updated received → run()");
                     run();
                 }
             };
 
             es.onerror = (err) => {
-                console.log("[SSE] error:", err);
-                console.log("[SSE] reconnecting in 1s...");
+                log("[SSE] error:", err);
+                log("[SSE] reconnecting in 1s...");
                 es?.close();
                 setTimeout(connect, 1000);
             };
@@ -100,7 +101,7 @@ export default function AllShiftPage() {
         window.addEventListener("resize", adjustScale);
 
         return () => {
-            console.log("[SSE] cleanup: closing connection");
+            log("[SSE] cleanup: closing connection");
             es?.close();
             window.removeEventListener("resize", adjustScale);
         };

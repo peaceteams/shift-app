@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import bcrypt from "bcryptjs";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log("▶ API /members/add START");
+  log("▶ API /members/add START");
 
   // -----------------------------
   // ① Cookie 認証（admin_session）
