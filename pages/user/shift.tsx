@@ -3,7 +3,6 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { GetServerSidePropsContext } from "next";
 import { requireUser } from "@/lib/auth/page/userAuth";
-import { supabaseClient } from "@/lib/supabase/client";
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     const auth = await requireUser(ctx);
@@ -61,23 +60,80 @@ export default function ShiftSubmitPage({ user }: any) {
     const [endMin, setEndMin] = useState("00");
 
     useEffect(() => {
+        // ★ SSE 接続
+        let es: EventSource | null = null;
+
+        function connect() {
+            if (es) es.close();
+
+            es = new EventSource("/api/shift/stream");
+
+            es.onopen = () => {
+                console.log("[SSE] connected");
+            };
+
+            es.onmessage = async (event) => {
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch {
+                    return;
+                }
+
+                if (data.type === "ping") return;
+                if (data.type === "connected") return;
+
+                // ★ 特定ユーザー通知
+                if (data.type === "shift_updated") {
+                    // 自分の user_id を API から取得
+                    const res = await fetch("/api/auth/me");
+                    const json = await res.json();
+
+                    if (!json.user) return;
+
+                    const myUserId = json.user.id;
+
+                    // 自分宛の通知だけ反応
+                    if (data.targetUserId === myUserId) {
+                        console.log("[SSE] shift_updated → run()");
+                        fetchShiftsFromDB();
+                    }
+                }
+            };
+
+            es.onerror = () => {
+                console.log("[SSE] error → reconnecting...");
+                es?.close();
+                setTimeout(connect, 1000);
+            };
+        }
+
+        connect();
+
+        return () => {
+            es?.close();
+        };
+    }, []);
+
+    useEffect(() => {
         setMounted(true);
         fetchShiftsFromDB();
     }, []);
-    
+
     // API通知
     async function notifyShiftUpdated() {
         await fetch("/api/shift/notify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    type: "shift_updated",
-                    targetUserId: user.Id,
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type: "shift_updated",
+                targetUserId: user.id,   // ★ 修正
             }),
         });
     }
 
     async function fetchShiftsFromDB() {
+        setLoading(true);
         const res = await fetch("/api/shift/get");
         const json = await res.json();
 

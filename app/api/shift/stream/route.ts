@@ -1,35 +1,32 @@
 import { NextRequest } from "next/server";
-import { supabaseClient } from "@/lib/supabase/client";
 
-export const clients: {
-  userId: string;
+type Client = {
+  sessionToken: string;
   controller: ReadableStreamDefaultController;
-}[] = [];
+};
+
+export const clients: Client[] = [];
 
 export async function GET(req: NextRequest) {
+  // Cookie から sessionToken を取得
   const sessionToken = req.cookies.get("user_session")?.value;
   if (!sessionToken) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { data, error } = await supabaseClient
-    .from("user_sessions")
-    .select("user_id")
-    .eq("token", sessionToken)
-    .single();
-
-  if (!data) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  const userId = data.user_id;
-
+  // SSE ストリーム作成
   const stream = new ReadableStream({
     start(controller) {
-      clients.push({ userId, controller });
+      // 接続を保存
+      clients.push({ sessionToken, controller });
+
+      // 初回メッセージ（任意）
+      controller.enqueue(`data: ${JSON.stringify({ type: "connected" })}\n\n`);
     },
+
     cancel() {
-      const idx = clients.findIndex((c) => c.userId === userId);
+      // 接続解除
+      const idx = clients.findIndex((c) => c.sessionToken === sessionToken);
       if (idx !== -1) clients.splice(idx, 1);
     },
   });
