@@ -1,33 +1,37 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { clients } from "../stream/route";
-import { log } from "@/utils/logger";
+import { supabaseClient } from "@/lib/supabase/client";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  log("[notify] body:", body);
-
   const encoder = new TextEncoder();
 
-  clients.forEach((conn, index) => {
-    // 特定ユーザー通知
-    if (body.targetUserId) {
-      if (conn.userId === body.targetUserId) {
-        log(`[notify] sending ONLY to ${conn.userId}`);
+  // 特定ユーザー通知
+  if (body.targetUserId) {
+    for (const conn of clients) {
+      // sessionToken → user_id を取得
+      const { data } = await supabaseClient
+        .from("user_sessions")
+        .select("user_id")
+        .eq("token", conn.sessionToken)
+        .single();
+
+      if (data && data.user_id === body.targetUserId) {
         conn.controller.enqueue(
           encoder.encode(`data: ${JSON.stringify(body)}\n\n`)
         );
       }
-      return;
     }
 
-    // 全員通知
-    log("[notify] sending to ALL:", index);
+    return NextResponse.json({ ok: true });
+  }
+
+  // 全員通知
+  for (const conn of clients) {
     conn.controller.enqueue(
       encoder.encode(`data: ${JSON.stringify(body)}\n\n`)
     );
-  });
+  }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: { "Content-Type": "application/json" },
-  });
+  return NextResponse.json({ ok: true });
 }
