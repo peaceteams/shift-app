@@ -1,33 +1,86 @@
-import { NextRequest } from "next/server";
-import { clients } from "../stream/route";
+// /pages/api/members/add.ts
+import type { NextApiRequest, NextApiResponse } from "next";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import bcrypt from "bcryptjs";
 import { log } from "@/utils/logger";
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
-  log("[notify] body:", body);
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  log("▶ API /members/add START");
 
-  const encoder = new TextEncoder();
+  // -----------------------------
+  // ① Cookie 認証（admin_session）
+  // -----------------------------
+  const token = req.cookies["admin_session"];
+  if (!token) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
 
-  clients.forEach((conn, index) => {
-    // 特定ユーザー通知
-    if (body.targetUserId) {
-      if (conn.userId === body.targetUserId) {
-        log(`[notify] sending ONLY to ${conn.userId}`);
-        conn.controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(body)}\n\n`)
-        );
-      }
-      return;
-    }
+  // -----------------------------
+  // ② セッション確認
+  // -----------------------------
+  const { data: session } = await supabaseAdmin
+    .from("admin_sessions")
+    .select("admin_id")
+    .eq("token", token)
+    .maybeSingle();
 
-    // 全員通知
-    log("[notify] sending to ALL:", index);
-    conn.controller.enqueue(
-      encoder.encode(`data: ${JSON.stringify(body)}\n\n`)
-    );
-  });
+  if (!session) {
+    return res.status(401).json({ error: "Invalid session" });
+  }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: { "Content-Type": "application/json" },
+  // -----------------------------
+  // ③ 管理者チェック
+  // -----------------------------
+  const { data: admin } = await supabaseAdmin
+    .from("admins")
+    .select("id")
+    .eq("id", session.admin_id)
+    .maybeSingle();
+
+  if (!admin) {
+    return res.status(403).json({ error: "Not admin" });
+  }
+
+  // -----------------------------
+  // ④ メンバー追加処理
+  // -----------------------------
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const { name, discord_id, userId, password } = req.body;
+
+  if (!name || !userId || !password) {
+    return res.status(400).json({ error: "name, userId, password は必須です" });
+  }
+
+  // パスワードをハッシュ化
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // -----------------------------
+  // ⑤ profiles に直接挿入
+  // -----------------------------
+  const { data: inserted, error: insertError } = await supabaseAdmin
+    .from("profiles")
+    .insert({
+      name,
+      discord_id: discord_id || null,
+      user_id: userId.toString(),
+      password_hash: passwordHash,
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    console.error("profiles insert error:", insertError);
+    return res.status(500).json({ error: insertError.message });
+  }
+
+  log("▶ API /members/add COMPLETE");
+
+  return res.status(200).json({
+    ok: true,
+    member: inserted,
+    rawPassword: password,
   });
 }

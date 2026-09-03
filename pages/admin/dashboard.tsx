@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
+import { supabaseClient } from "@/lib/supabase/client";
 import { supabaseApi } from "@/lib/supabase/api";
 import { useRouter } from "next/router";
 import { log } from "@/utils/logger";
