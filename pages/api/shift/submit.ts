@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { parse } from "cookie";
+import { log } from "@/utils/logger";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   log("▶ /api/shift/submit START");
