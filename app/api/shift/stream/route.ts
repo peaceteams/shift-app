@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { supabaseClient } from "@/lib/supabase/client";
 
 export const clients: {
   userId: string;
@@ -6,10 +7,22 @@ export const clients: {
 }[] = [];
 
 export async function GET(req: NextRequest) {
-  const userId = req.cookies.get("sb-user-id")?.value;
-  if (!userId) {
+  const sessionToken = req.cookies.get("user_session")?.value;
+  if (!sessionToken) {
     return new Response("Unauthorized", { status: 401 });
   }
+
+  const { data, error } = await supabaseClient
+    .from("user_sessions")
+    .select("user_id")
+    .eq("token", sessionToken)
+    .single();
+
+  if (!data) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const userId = data.user_id;
 
   const stream = new ReadableStream({
     start(controller) {
