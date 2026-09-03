@@ -1,26 +1,23 @@
 import { NextRequest } from "next/server";
-import { log } from "@/utils/logger";
 
-const clients: ReadableStreamDefaultController[] = [];
+export const clients: {
+  userId: string;
+  controller: ReadableStreamDefaultController;
+}[] = [];
 
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const userId = req.cookies.get("sb-user-id")?.value;
+  if (!userId) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   const stream = new ReadableStream({
     start(controller) {
-      clients.push(controller);
-      log("[stream] client connected. total:", clients.length);
-
-      controller.enqueue(
-        new TextEncoder().encode(
-          `data: ${JSON.stringify({ type: "connected" })}\n\n`
-        )
-      );
+      clients.push({ userId, controller });
     },
-    cancel(controller) {
-      const index = clients.indexOf(controller);
-      if (index !== -1) {
-        clients.splice(index, 1);
-      }
-      log("[stream] client disconnected. total:", clients.length);
+    cancel() {
+      const idx = clients.findIndex((c) => c.userId === userId);
+      if (idx !== -1) clients.splice(idx, 1);
     },
   });
 
@@ -28,9 +25,7 @@ export function GET(req: NextRequest) {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+      "Connection": "keep-alive",
     },
   });
 }
-
-export { clients };

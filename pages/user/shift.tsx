@@ -26,16 +26,7 @@ function trimSeconds(time: string) {
     return time.slice(0, 5); // "20:00:00" → "20:00"
 }
 
-// API通知
-async function notifyShiftUpdated() {
-    await fetch("/api/shift/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "shift_updated" }),
-    });
-}
-
-export default function ShiftSubmitPage() {
+export default function ShiftSubmitPage({ user }: any) {
     // 選択した日付
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -73,6 +64,18 @@ export default function ShiftSubmitPage() {
         setMounted(true);
         fetchShiftsFromDB();
     }, []);
+    
+    // API通知
+    async function notifyShiftUpdated() {
+        await fetch("/api/shift/notify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "shift_updated",
+                    targetUserId: user.Id,
+            }),
+        });
+    }
 
     async function fetchShiftsFromDB() {
         const res = await fetch("/api/shift/get");

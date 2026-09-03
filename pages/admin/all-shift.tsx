@@ -81,11 +81,6 @@ export default function AllShiftPage() {
 
                 if (data.type === "ping") return;
                 if (data.type === "connected") return;
-
-                if (data.type === "shift_updated") {
-                    log("[SSE] shift_updated received → run()");
-                    run();
-                }
             };
 
             es.onerror = (err) => {
