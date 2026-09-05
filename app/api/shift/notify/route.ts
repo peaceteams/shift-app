@@ -3,13 +3,9 @@ import { clients } from "../stream/route";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  console.log("[notify] body:", body);
-  console.log("[notify] clients.length:", clients.length);
-
   const encoder = new TextEncoder();
 
-  clients.forEach((controller, index) => {
-    console.log("[notify] sending to client", index);
+  clients.forEach((controller) => {
     controller.enqueue(
       encoder.encode(`data: ${JSON.stringify(body)}\n\n`)
     );

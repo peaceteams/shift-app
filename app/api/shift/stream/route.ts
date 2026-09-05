@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { log } from "@/utils/logger";
 
 const clients: ReadableStreamDefaultController[] = [];
 
@@ -7,7 +6,6 @@ export function GET(req: NextRequest) {
   const stream = new ReadableStream({
     start(controller) {
       clients.push(controller);
-      log("[stream] client connected. total:", clients.length);
 
       controller.enqueue(
         new TextEncoder().encode(
@@ -17,10 +15,7 @@ export function GET(req: NextRequest) {
     },
     cancel(controller) {
       const index = clients.indexOf(controller);
-      if (index !== -1) {
-        clients.splice(index, 1);
-      }
-      log("[stream] client disconnected. total:", clients.length);
+      if (index !== -1) clients.splice(index, 1);
     },
   });
 

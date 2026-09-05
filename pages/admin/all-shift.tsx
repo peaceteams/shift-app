@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
-import { log } from "@/utils/logger";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     const auth = await requireAdmin(ctx);
@@ -44,6 +43,41 @@ export default function AllShiftPage() {
     const [shifts, setShifts] = useState<Shift[]>([]);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+
+    useEffect(() => {
+        async function run() {
+            await load();
+            adjustScale();
+        }
+
+        run();
+
+        // 🔥 Supabase Realtime 削除 → SSE に置き換え
+        const eventSource = new EventSource("/api/shift/stream");
+
+        eventSource.onmessage = (event) => {
+            console.log("SSE:", event.data);
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.type === "shift_updated") {
+                    run(); // ← 通知が来たら再読み込み
+                }
+            } catch (e) {
+                console.error("SSE parse error", e);
+            }
+        };
+            eventSource.onerror = () => {
+            console.error("SSE connection lost");
+        };
+
+        window.addEventListener("resize", adjustScale);
+
+        return () => {
+            eventSource.close();
+            window.removeEventListener("resize", adjustScale);
+        };
+    }, [startDate, endDate]);
 
     async function load() {
         const res = await fetch("/api/admin/list", {
