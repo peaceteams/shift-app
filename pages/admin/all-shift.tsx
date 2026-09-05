@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
+import { log } from "@/utils/logger";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     const auth = await requireAdmin(ctx);

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { log } from "@/utils/logger";
 
 const clients: ReadableStreamDefaultController[] = [];
 
