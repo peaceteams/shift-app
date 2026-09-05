@@ -53,31 +53,67 @@ export default function AllShiftPage() {
 
         run();
 
-        // 🔥 Supabase Realtime 削除 → SSE に置き換え
-        const eventSource = new EventSource("/api/shift/stream");
+        let es: EventSource | null = null;
 
-        eventSource.onmessage = (event) => {
-            console.log("SSE:", event.data);
-            try {
-                const data = JSON.parse(event.data);
+        function connect() {
+            if (es) {
+                log("[SSE] closing old connection");
+                es.close();
+            }
+
+            log("[SSE] connecting...");
+            es = new EventSource("/api/shift/stream");
+
+            es.onopen = () => {
+                log("[SSE] connection opened");
+            };
+
+            es.onmessage = (event) => {
+                log("[SSE] raw:", event.data);
+
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch {
+                    log("[SSE] JSON parse error");
+                    return;
+                }
+
+                if (data.type === "ping") return;
+                if (data.type === "connected") return;
 
                 if (data.type === "shift_updated") {
-                    run(); // ← 通知が来たら再読み込み
+                    log("[SSE] shift_updated received → run()");
+                    run();
                 }
-            } catch (e) {
-                console.error("SSE parse error", e);
-            }
-        };
-            eventSource.onerror = () => {
-            console.error("SSE connection lost");
-        };
+            };
+
+            es.onerror = (err) => {
+                log("[SSE] error:", err);
+                log("[SSE] reconnecting in 1s...");
+                es?.close();
+                setTimeout(connect, 1000);
+            };
+        }
+
+        connect();
 
         window.addEventListener("resize", adjustScale);
 
         return () => {
-            eventSource.close();
+            log("[SSE] cleanup: closing connection");
+            es?.close();
             window.removeEventListener("resize", adjustScale);
         };
+    }, []);
+
+    useEffect(() => {
+        async function run() {
+            await load();
+            adjustScale();
+        }
+
+        run();
     }, [startDate, endDate]);
 
     async function load() {

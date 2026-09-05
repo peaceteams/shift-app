@@ -3,6 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { GetServerSidePropsContext } from "next";
 import { requireUser } from "@/lib/auth/page/userAuth";
+import { supabaseClient } from "@/lib/supabase/client";
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     const auth = await requireUser(ctx);
