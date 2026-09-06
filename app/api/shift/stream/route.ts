@@ -1,7 +1,5 @@
 import { log } from "@/utils/logger";
 
-const _clients: ReadableStreamDefaultController[] = [];
-
 log("[stream] LOADED (SSR safe)");
 
 // export async function GET() {
