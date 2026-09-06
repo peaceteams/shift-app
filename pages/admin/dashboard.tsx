@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
-import { supabaseClient } from "@/lib/supabase/client";
 import { supabaseApi } from "@/lib/supabase/api";
 import { useRouter } from "next/router";
 import { log } from "@/utils/logger";
@@ -58,35 +57,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     setLinkMap(json.linkMap);
   }
 
-  useEffect(() => {
-    const eventSource = new EventSource("@/app/api/stream");
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === "dashboard_updated") {
-        log("📡 ダッシュボード更新通知受信");
-        refreshDashboard(); // 最新データを再取得
-      }
-    };
-
-    eventSource.onerror = () => {
-      log("⚠ SSE 切断 → 再接続");
-      eventSource.close();
-      setTimeout(() => {
-        const es = new EventSource("/api/stream");
-      }, 1000);
-    };
-
-    return () => eventSource.close();
-  }, []);
-
   async function notifyShiftUpdated() {
-    await fetch("/api/shift/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "dashboard_updated" }),
-    });
   }
   
   // ---------------------------------------------------------
