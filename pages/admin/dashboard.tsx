@@ -59,34 +59,34 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }
 
   useEffect(() => {
-    // const eventSource = new EventSource("@/app/api/stream");
+    const eventSource = new EventSource("@/app/api/stream");
 
-    // eventSource.onmessage = (event) => {
-    //   const data = JSON.parse(event.data);
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-    //   if (data.type === "dashboard_updated") {
-    //     log("📡 ダッシュボード更新通知受信");
-    //     refreshDashboard(); // 最新データを再取得
-    //   }
-    // };
+      if (data.type === "dashboard_updated") {
+        log("📡 ダッシュボード更新通知受信");
+        refreshDashboard(); // 最新データを再取得
+      }
+    };
 
-    // eventSource.onerror = () => {
-    //   log("⚠ SSE 切断 → 再接続");
-    //   eventSource.close();
-    //   setTimeout(() => {
-    //     const es = new EventSource("/api/stream");
-    //   }, 1000);
-    // };
+    eventSource.onerror = () => {
+      log("⚠ SSE 切断 → 再接続");
+      eventSource.close();
+      setTimeout(() => {
+        const es = new EventSource("/api/stream");
+      }, 1000);
+    };
 
-    // return () => eventSource.close();
+    return () => eventSource.close();
   }, []);
 
   async function notifyShiftUpdated() {
-    // await fetch("/api/shift/notify", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ type: "dashboard_updated" }),
-    // });
+    await fetch("/api/shift/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "dashboard_updated" }),
+    });
   }
   
   // ---------------------------------------------------------
@@ -466,16 +466,28 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 // 🔐 SSR: メンバー一覧 + シフト提出状況 + ワンタイムリンク
 // ---------------------------------------------------------
 export const getServerSideProps = async (ctx: any) => {
+  log("[SSR] getServerSideProps START:", __filename);
+  log("[SSR] URL:", ctx.req.url);
+  log("[SSR] cookies:", ctx.req.cookies);
+
   const auth = await requireAdmin(ctx);
-  if (!auth.ok) return { redirect: auth.redirect };
 
+  log("[SSR] requireAdmin result:", auth);
 
+  if (!auth.ok) {
+    log("[SSR] ❌ requireAdmin failed → redirect:", auth.redirect);
+    return { redirect: auth.redirect };
+  }
 
-  // ① profiles
-  const { data: profiles } = await supabaseApi
+  log("[SSR] requireAdmin OK → fetching profiles");
+
+  const { data: profiles, error: profilesError } = await supabaseApi
     .from("profiles")
     .select("id, name, user_id, password_hash, discord_id")
     .order("created_at");
+
+  log("[SSR] profiles:", profiles);
+  log("[SSR] profilesError:", profilesError);
 
   const members = (profiles ?? []).map((m: any) => ({
     id: m.id,
@@ -484,15 +496,21 @@ export const getServerSideProps = async (ctx: any) => {
     discord_id: m.discord_id
   }));
 
-  // ③ shift_links（重要）
-  const { data: links } = await supabaseApi
+  log("[SSR] fetching shift_links");
+
+  const { data: links, error: linksError } = await supabaseApi
     .from("shift_links")
     .select("user_id, token");
+
+  log("[SSR] links:", links);
+  log("[SSR] linksError:", linksError);
 
   const linkMap: Record<string, string> = {};
   for (const row of links ?? []) {
     linkMap[row.user_id] = `${process.env.NEXT_PUBLIC_APP_URL}/shift/${row.token}`;
   }
+
+  log("[SSR] getServerSideProps END");
 
   return {
     props: {
