@@ -59,34 +59,34 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/stream");
+    // const eventSource = new EventSource("@/app/api/stream");
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    // eventSource.onmessage = (event) => {
+    //   const data = JSON.parse(event.data);
 
-      if (data.type === "dashboard_updated") {
-        log("📡 ダッシュボード更新通知受信");
-        refreshDashboard(); // 最新データを再取得
-      }
-    };
+    //   if (data.type === "dashboard_updated") {
+    //     log("📡 ダッシュボード更新通知受信");
+    //     refreshDashboard(); // 最新データを再取得
+    //   }
+    // };
 
-    eventSource.onerror = () => {
-      log("⚠ SSE 切断 → 再接続");
-      eventSource.close();
-      setTimeout(() => {
-        const es = new EventSource("/api/stream");
-      }, 1000);
-    };
+    // eventSource.onerror = () => {
+    //   log("⚠ SSE 切断 → 再接続");
+    //   eventSource.close();
+    //   setTimeout(() => {
+    //     const es = new EventSource("/api/stream");
+    //   }, 1000);
+    // };
 
-    return () => eventSource.close();
+    // return () => eventSource.close();
   }, []);
 
   async function notifyShiftUpdated() {
-    await fetch("/api/shift/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "dashboard_updated" }),
-    });
+    // await fetch("/api/shift/notify", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ type: "dashboard_updated" }),
+    // });
   }
   
   // ---------------------------------------------------------
