@@ -1,14 +1,9 @@
 import { NextRequest } from "next/server";
 import { log } from "@/utils/logger";
 
-log("[stream] Route Handler LOADED"); // ★ SSR が読み込んだ瞬間に出る
-
 const clients: ReadableStreamDefaultController[] = [];
 
 export function GET(req: NextRequest) {
-  log("[stream] GET called");
-  log("[stream] cookies:", req.cookies.getAll());
-
   const stream = new ReadableStream({
     start(controller) {
       clients.push(controller);
@@ -28,8 +23,6 @@ export function GET(req: NextRequest) {
       log("[stream] client disconnected. total:", clients.length);
     },
   });
-
-  log("[stream] returning SSE stream");
 
   return new Response(stream, {
     headers: {
