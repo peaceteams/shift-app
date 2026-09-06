@@ -1,8 +1,7 @@
-// app/api/notify/route.ts
 import { log } from "@/utils/logger";
 import { getClients } from "../stream/route";
 
-log("[notify] Route Handler LOADED (SSR safe)");
+log("[notify] LOADED (SSR safe)");
 
 export async function POST(req: Request) {
   log("[notify] POST called");

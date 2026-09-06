@@ -1,10 +1,8 @@
-// app/api/stream/route.ts
 import { log } from "@/utils/logger";
 
-// ★ SSR が評価できないように、グローバル状態を export しない
 const _clients: ReadableStreamDefaultController[] = [];
 
-log("[stream] Route Handler LOADED (SSR safe)");
+log("[stream] LOADED (SSR safe)");
 
 export async function GET() {
   log("[stream] GET called");
@@ -36,7 +34,6 @@ export async function GET() {
   });
 }
 
-// ★ notify 側から参照するための安全な getter
 export function getClients() {
   return _clients;
 }
