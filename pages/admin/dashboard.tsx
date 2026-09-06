@@ -466,6 +466,12 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 // 🔐 SSR: メンバー一覧 + シフト提出状況 + ワンタイムリンク
 // ---------------------------------------------------------
 export const getServerSideProps = async (ctx: any) => {
+  console.log(
+    "[SSR] loaded modules:",
+    Object.keys(require.cache).filter((m) =>
+      m.includes("api/shift") || m.includes("stream") || m.includes("notify")
+    )
+  );
   log("[SSR] getServerSideProps START:", __filename);
   log("[SSR] URL:", ctx.req.url);
   log("[SSR] cookies:", ctx.req.cookies);
