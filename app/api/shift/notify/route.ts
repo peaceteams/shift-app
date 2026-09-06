@@ -1,10 +1,16 @@
-import { NextRequest } from "next/server";
-import { clients } from "../stream/route";
+// app/api/notify/route.ts
 import { log } from "@/utils/logger";
+import { getClients } from "../stream/route";
 
-export async function POST(req: NextRequest) {
+log("[notify] Route Handler LOADED (SSR safe)");
+
+export async function POST(req: Request) {
+  log("[notify] POST called");
+
   const body = await req.json();
   log("[notify] body:", body);
+
+  const clients = getClients();
   log("[notify] clients.length:", clients.length);
 
   const encoder = new TextEncoder();
@@ -15,6 +21,8 @@ export async function POST(req: NextRequest) {
       encoder.encode(`data: ${JSON.stringify(body)}\n\n`)
     );
   });
+
+  log("[notify] POST END");
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: { "Content-Type": "application/json" },

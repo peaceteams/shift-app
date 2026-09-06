@@ -1,13 +1,18 @@
-import { NextRequest } from "next/server";
+// app/api/stream/route.ts
 import { log } from "@/utils/logger";
 
-const clients: ReadableStreamDefaultController[] = [];
+// ★ SSR が評価できないように、グローバル状態を export しない
+const _clients: ReadableStreamDefaultController[] = [];
 
-export function GET(req: NextRequest) {
+log("[stream] Route Handler LOADED (SSR safe)");
+
+export async function GET() {
+  log("[stream] GET called");
+
   const stream = new ReadableStream({
     start(controller) {
-      clients.push(controller);
-      log("[stream] client connected. total:", clients.length);
+      _clients.push(controller);
+      log("[stream] client connected. total:", _clients.length);
 
       controller.enqueue(
         new TextEncoder().encode(
@@ -16,11 +21,9 @@ export function GET(req: NextRequest) {
       );
     },
     cancel(controller) {
-      const index = clients.indexOf(controller);
-      if (index !== -1) {
-        clients.splice(index, 1);
-      }
-      log("[stream] client disconnected. total:", clients.length);
+      const index = _clients.indexOf(controller);
+      if (index !== -1) _clients.splice(index, 1);
+      log("[stream] client disconnected. total:", _clients.length);
     },
   });
 
@@ -33,4 +36,7 @@ export function GET(req: NextRequest) {
   });
 }
 
-export { clients };
+// ★ notify 側から参照するための安全な getter
+export function getClients() {
+  return _clients;
+}
