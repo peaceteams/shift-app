@@ -160,26 +160,19 @@ export default function AdminDashboard({ initialMembers }: any) {
       <h1>管理者ダッシュボード</h1>
 
       <section style={{ marginTop: 40 }}>
-        <h2>ページ移動</h2>
-
-        <button onClick={() => router.push("./all-shift")}>全メンバーのシフト一覧</button>
+        <button onClick={() => router.push("./all-shift")}>シフト一覧</button>
+        <button onClick={openAddModal} style={{ marginLeft: 10 }}>メンバー追加</button>
       </section>
 
       <section style={{ marginTop: 40 }}>
-        <h2>操作一覧</h2>
-
-        <button onClick={openAddModal} style={{ marginLeft: 10 }}>
-          メンバー追加
-        </button>
+        <h2>検索</h2>
+        <input
+          placeholder="名前 / ユーザーID で検索"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "300px", marginBottom: "20px" }}
+        />
       </section>
-
-      <h2>検索</h2>
-      <input
-        placeholder="名前 / ユーザーID で検索"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ width: "300px", marginBottom: "20px" }}
-      />
 
       <section style={{ marginTop: 40 }}>
         <h2>メンバー</h2>

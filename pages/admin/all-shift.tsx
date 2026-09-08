@@ -55,7 +55,7 @@ export default function AllShiftPage() {
 
     // 管理者用 SSE 受信処理
     useEffect(() => {
-    const es = new EventSource("/sse/admin");
+    const es = new EventSource("api/sse/admin");
 
     es.onmessage = (event) => {
         console.log("[SSE] admin received:", event.data);
