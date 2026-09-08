@@ -91,22 +91,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: profileError.message });
   }
 
-  // -----------------------------
-  // ⑤ shift_sync_state から削除
-  // -----------------------------
-  log("[API] Deleting from shift_sync_state...");
-  const { error: syncError } = await supabaseAdmin
-    .from("shift_sync_state")
-    .delete()
-    .eq("user_id", id);
-
-  log("[API] shift_sync_state delete result:", syncError);
-
-  if (syncError) {
-    log("[API] ❌ shift_sync_state delete error:", syncError);
-    return res.status(500).json({ error: syncError.message });
-  }
-
   log("[API] DELETE SUCCESS");
   log("--------------------------------------------------");
 
