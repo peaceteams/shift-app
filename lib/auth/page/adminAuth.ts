@@ -1,58 +1,72 @@
 import { GetServerSidePropsContext } from "next";
 import { supabaseApi } from "@/lib/supabase/api";
-import { log } from "@/utils/logger";
 
 export async function requireAdmin(ctx: GetServerSidePropsContext) {
-  log("▶ SSR 認証開始");
+  console.log("▶ SSR 認証開始");
 
   const cookies = ctx.req.cookies;
-  log("▶ SSR Cookie:", cookies);
+  console.log("▶ SSR Cookie:", cookies);
 
   const token = cookies["admin_session"];
-  log("▶ SSR admin_session:", token);
+  console.log("▶ SSR admin_session:", token);
 
   if (!token) {
-    log("❌ admin_session が SSR に届いていない");
+    console.log("❌ admin_session が SSR に届いていない → redirect");
     return {
       ok: false,
-      redirect: { destination: "/admin/login", permanent: false },
+      redirect: { destination: "/admin/console.login", permanent: false },
     };
   }
 
-  // セッション確認
-  const { data: session } = await supabaseApi
+  console.log("▶ admin_sessions START");
+  const { data: session, error: sessionError } = await supabaseApi
     .from("admin_sessions")
     .select("admin_id")
     .eq("token", token)
     .maybeSingle();
+  console.log("▶ admin_sessions END:", { session, sessionError });
 
-  log("▶ session:", session);
-
-  if (!session) {
-    log("❌ admin_sessions に該当セッションなし");
+  if (sessionError) {
+    console.log("❌ admin_sessions error:", sessionError);
     return {
       ok: false,
-      redirect: { destination: "/admin/login", permanent: false },
+      redirect: { destination: "/admin/console.login", permanent: false },
     };
   }
 
-  // 管理者情報取得
-  const { data: admin } = await supabaseApi
+  if (!session) {
+    console.log("❌ admin_sessions に該当セッションなし → redirect");
+    return {
+      ok: false,
+      redirect: { destination: "/admin/console.login", permanent: false },
+    };
+  }
+
+  console.log("▶ admins START");
+  const { data: admin, error: adminError } = await supabaseApi
     .from("admins")
     .select("id")
     .eq("id", session.admin_id)
     .maybeSingle();
+  console.log("▶ admins END:", { admin, adminError });
 
-  if (!admin) {
-    log("❌ admins に該当管理者なし");
+  if (adminError) {
+    console.log("❌ admins error:", adminError);
     return {
       ok: false,
-      redirect: { destination: "/admin/login", permanent: false },
+      redirect: { destination: "/admin/console.login", permanent: false },
     };
   }
 
-  log("✅ SSR 認証成功");
+  if (!admin) {
+    console.log("❌ admins に該当管理者なし → redirect");
+    return {
+      ok: false,
+      redirect: { destination: "/admin/console.login", permanent: false },
+    };
+  }
 
+  console.log("✅ SSR 認証成功");
   return {
     ok: true,
     user: admin,
