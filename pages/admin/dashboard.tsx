@@ -10,7 +10,7 @@ type Member = {
   name: string;
 };
 
-export default function AdminDashboard({ user, initialMembers, initialLinks }: any) {
+export default function AdminDashboard({ initialMembers }: any) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [search, setSearch] = useState("")
   const router = useRouter();;
@@ -19,8 +19,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     const q = search.toLowerCase();
     return members.filter((m) => {
       return (
-        m.id.toLowerCase().includes(q) ||
-        m.name.toLowerCase().includes(q)
+        m.name.toLowerCase().includes(q) ||
+        m.user_id.toLowerCase().includes(q)
       );
     });
   }, [search, members]);
@@ -166,7 +166,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
       <h2>検索</h2>
       <input
-        placeholder="UID / 名前 で検索"
+        placeholder="名前 / ユーザーID で検索"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ width: "300px", marginBottom: "20px" }}
