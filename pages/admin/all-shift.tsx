@@ -46,6 +46,14 @@ export default function AllShiftPage() {
     const [endDate, setEndDate] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
 
+    useEffect(() => {
+        async function run() {
+            await load();
+            adjustScale();
+        }
+        run();
+    }, [startDate, endDate]);
+
     // 画面サイズ変更時に自動で縮小し直す
     useEffect(() => {
         const handleResize = () => {
