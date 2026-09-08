@@ -1,20 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-// import { requireAdmin } from "@/lib/auth/page/adminAuth";
+import { requireAdmin } from "@/lib/auth/page/adminAuth";
 import { supabaseApi } from "@/lib/supabase/api";
 import { useRouter } from "next/router";
 import { log } from "@/utils/logger";
-
-// 一時的なダミー版（テスト用）
-const requireAdmin = async (ctx: any) => {
-  return {
-    ok: true,
-    user: {
-      id: "debug-admin",
-      name: "Debug Admin",
-    },
-    redirect: null, // 追加
-  };
-};
 
 type Member = {
   id: string;
@@ -25,10 +13,7 @@ type Member = {
 
 export default function AdminDashboard({ user, initialMembers, initialLinks }: any) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
-  const [linkMap, setLinkMap] = useState<Record<string, string>>(initialLinks);
-
   const [search, setSearch] = useState("")
-  
   const router = useRouter();;
 
   const filteredMembers = useMemo(() => {
@@ -56,9 +41,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   const [editName, setEditName] = useState("");
   const [editDiscord, setEditDiscord] = useState("");
 
-  //コピー吹き出し
-  const [bubbleMap, setBubbleMap] = useState<{ [id: string]: "show" | "hide" | null }>({});
-
   async function refreshDashboard() {
     log("🔄 ダッシュボード最新データ取得");
 
@@ -66,7 +48,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     const json = await res.json();
 
     setMembers(json.members);
-    setLinkMap(json.linkMap);
   }
 
   async function notifyShiftUpdated() {
@@ -173,48 +154,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   }
 
   // ---------------------------------------------------------
-  // 🔗 ワンタイムリンク管理
-  // ---------------------------------------------------------
-  async function generateLink(user_id: string) {
-    await fetch("/api/onetime/regenerate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id }),
-    });
-  }
-
-  async function deleteLink(user_id: string) {
-    await fetch("/api/onetime/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id }),
-    });
-  }
-
-  async function sendLink(user_id: string) {
-    await fetch("/api/onetime/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id }),
-    });
-  }
-
-  // ---------------------------------------------------------
-  // 🧩 一括操作
-  // ---------------------------------------------------------
-  async function generateAll() {
-    await fetch("/api/onetime/regenerate-all", { method: "POST" });
-  }
-
-  async function deleteAll() {
-    await fetch("/api/onetime/delete-all", { method: "POST" });
-  }
-
-  async function sendAll() {
-    await fetch("/api/onetime/send-all", { method: "POST" });
-  }
-
-  // ---------------------------------------------------------
   // 🖥️ UI
   // ---------------------------------------------------------
   return (
@@ -229,16 +168,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
       <section style={{ marginTop: 40 }}>
         <h2>操作一覧</h2>
-
-        <button onClick={generateAll} style={{ marginRight: 10 }}>
-          全員生成 / 再生成
-        </button>
-
-        <button onClick={deleteAll} style={{ marginRight: 10 }}>
-          全員削除
-        </button>
-
-        <button onClick={sendAll}>全員にDM送信</button>
 
         <button onClick={openAddModal} style={{ marginLeft: 10 }}>
           メンバー追加
@@ -263,58 +192,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <div>UUID: {m.id}</div>
               <div>ユーザーID: {m.user_id}</div>
               <div>Discord: {m.discord_id ?? "未登録"}</div>
-
-            {linkMap[m.id] ? (
-              <div className="url-wrapper">
-                <span>URL: </span>
-                <span
-                  className="url-text"
-                  onClick={() => {
-                    navigator.clipboard.writeText(linkMap[m.id]);
-
-                    setBubbleMap((prev) => ({ ...prev, [m.id]: "show" }));
-
-                    setTimeout(() => {
-                      setBubbleMap((prev) => ({ ...prev, [m.id]: "hide" }));
-                    }, 1200);
-
-                    setTimeout(() => {
-                      setBubbleMap((prev) => ({ ...prev, [m.id]: null }));
-                    }, 1500);
-                  }}
-                >
-                  {linkMap[m.id]}
-                </span>
-
-                {bubbleMap[m.id] && (
-                  <span className={`copy-bubble ${bubbleMap[m.id]}`}>
-                    Copied!
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div className="url-wrapper">URL: 未生成</div>
-            )}
-
-              <div style={{ marginTop: 5 }}>
-                <button onClick={() => openEditModal(m)}>編集</button>
-
-                <button onClick={() => deleteLink(m.id)} style={{ marginLeft: 10 }}>
-                  ワンタイムリンク削除
-                </button>
-
-                <button onClick={() => generateLink(m.id)} style={{ marginLeft: 10 }}>
-                  ワンタイムリンク生成 / 再生成
-                </button>
-
-                <button onClick={() => sendLink(m.id)} style={{ marginLeft: 10 }}>
-                  DMにワンタイムリンクを送信
-                </button>
-
-                <button onClick={() => deleteMember(m.id)} style={{ marginLeft: 10, color: "red" }}>
-                  削除
-                </button>
-              </div>
             </li>
           ))}
         </ul>
