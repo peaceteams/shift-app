@@ -44,6 +44,7 @@ export default function AllShiftPage() {
     const [shifts, setShifts] = useState<Shift[]>([]);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [isUpdating, setIsUpdating] = useState(false);
 
     // 画面サイズ変更時に自動で縮小し直す
     useEffect(() => {
@@ -78,10 +79,11 @@ export default function AllShiftPage() {
             return;
             }
 
-            // 通知の種類で分岐
             if (data.type = "shift_updated") {
                 log("[SSE] shift_updated → load()");
+                setIsUpdating(true);
                 run();
+                setIsUpdating(false);
             }
         };
 
@@ -211,153 +213,175 @@ export default function AllShiftPage() {
     }
 
     return (
-        <div style={{ padding: 20 }}>
-            <h1>全メンバーのシフト一覧</h1>
-
-            <div style={{ marginTop: 20, marginBottom: 20 }}>
-                <label>開始日：</label>
-                <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                />
-
-                <span style={{ margin: "0 10px" }}>〜</span>
-
-                <label>終了日：</label>
-                <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                />
-            </div>
-
-            <div
-                id="table-wrapper"
-                style={{
-                    width: "100%",
-                    overflowX: "hidden",
-                    overflowY: "auto",
-                    maxHeight: "80vh", 
+        <>
+            {isUpdating && (
+                <div style={{
+                    position: "fixed",
+                    top: "10px",
+                    left: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "6px 10px",
+                    background: "rgba(0,0,0,0.6)",
+                    color: "white",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    zIndex: 9999,
                 }}>
+                    <span>更新中…</span>
+                    <div className="loader" />
+                </div>
+            )}
+
+            <div style={{ padding: 20 }}>
+                <h1>シフト確認ページ</h1>
+
+                <div style={{ marginTop: 20, marginBottom: 20 }}>
+                    <label>開始日：</label>
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                    />
+
+                    <span style={{ margin: "0 10px" }}>〜</span>
+
+                    <label>終了日：</label>
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                    />
+                </div>
 
                 <div
-                    id="table-scale"
+                    id="table-wrapper"
                     style={{
-                        transformOrigin: "top left",
-                        display: "inline-block",
-                    }}
-                >
-                    
-                    <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", width: "100%", }}>
-                        <colgroup>
-                            <col style={{ width: "100px" }} />  {/* 名前 */}
-                            <col style={{ width: "100px" }} />   {/* ユーザーID */}
-                            <col style={{ width: "150px" }} />   {/* 確定・解除ボタン */}
-                            {dates.map(() => (
-                                <col key={crypto.randomUUID()} style={{ width: "100px" }} />  // 日付列
-                            ))}
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th>名前</th>
-                                <th>ユーザーID（番号）</th>
-                                <th>確定・解除ボタン</th>
-                                {dates.map((d) => (
-                                    <th key={d}>{d.slice(5)}</th>
+                        width: "100%",
+                        overflowX: "hidden",
+                        overflowY: "auto",
+                        maxHeight: "80vh", 
+                    }}>
+
+                    <div
+                        id="table-scale"
+                        style={{
+                            transformOrigin: "top left",
+                            display: "inline-block",
+                        }}
+                    >
+                        
+                        <table border={1} cellPadding={6} style={{ marginTop: 20, borderCollapse: "collapse", tableLayout: "fixed", width: "100%", }}>
+                            <colgroup>
+                                <col style={{ width: "100px" }} />  {/* 名前 */}
+                                <col style={{ width: "100px" }} />   {/* ユーザーID */}
+                                <col style={{ width: "150px" }} />   {/* 確定・解除ボタン */}
+                                {dates.map(() => (
+                                    <col key={crypto.randomUUID()} style={{ width: "100px" }} />  // 日付列
                                 ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map((u) => (
-                                <tr key={u.id}>
-                                <td style={{ textAlign: "center", padding: 4 }}>{u.name}</td>
-                                <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
-                                <td style={{ textAlign: "center" }}>
-                                    <button
-                                        onClick={() => confirmUserPeriod(u.id)}
-                                        style={{
-                                            marginRight: 6,
-                                            padding: "4px 8px",
-                                            background: "#0070f3",
-                                            color: "white",
-                                            borderRadius: 4,
-                                        }}
-                                    >
-                                        確定
-                                    </button>
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>名前</th>
+                                    <th>ユーザーID（番号）</th>
+                                    <th>確定・解除ボタン</th>
+                                    {dates.map((d) => (
+                                        <th key={d}>{d.slice(5)}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.map((u) => (
+                                    <tr key={u.id}>
+                                    <td style={{ textAlign: "center", padding: 4 }}>{u.name}</td>
+                                    <td style={{ textAlign: "center", padding: 4 }}>{u.user_id}</td>
+                                    <td style={{ textAlign: "center" }}>
+                                        <button
+                                            onClick={() => confirmUserPeriod(u.id)}
+                                            style={{
+                                                marginRight: 6,
+                                                padding: "4px 8px",
+                                                background: "#0070f3",
+                                                color: "white",
+                                                borderRadius: 4,
+                                            }}
+                                        >
+                                            確定
+                                        </button>
 
-                                    <button
-                                        onClick={() => unconfirmUserPeriod(u.id)}
-                                        style={{
-                                            padding: "4px 8px",
-                                            background: "red",
-                                            color: "white",
-                                            borderRadius: 4,
-                                        }}
-                                    >
-                                        解除
-                                    </button>
-                                </td>
+                                        <button
+                                            onClick={() => unconfirmUserPeriod(u.id)}
+                                            style={{
+                                                padding: "4px 8px",
+                                                background: "red",
+                                                color: "white",
+                                                borderRadius: 4,
+                                            }}
+                                        >
+                                            解除
+                                        </button>
+                                    </td>
 
-                                {dates.map((d) => {
-                                    const shift = shifts.find(
-                                        (s) => s.user_id === u.id && s.date === d
-                                    );
-                                    return (
-                                    <td
-                                        key={d}
-                                        style={{
-                                            textAlign: "center",
-                                            padding: 4,
-                                            background: shift?.is_confirmed ? "#d0e7ff" : "white"
-                                        }}
-                                    >
-                                        <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
-                                            {shift ? (
-                                                shift.is_holiday ? (
-                                                    <div style={{ color: "red", fontWeight: "bold" }}>休み希望</div>
+                                    {dates.map((d) => {
+                                        const shift = shifts.find(
+                                            (s) => s.user_id === u.id && s.date === d
+                                        );
+                                        return (
+                                        <td
+                                            key={d}
+                                            style={{
+                                                textAlign: "center",
+                                                padding: 4,
+                                                background: shift?.is_confirmed ? "#d0e7ff" : "white"
+                                            }}
+                                        >
+                                            <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
+                                                {shift ? (
+                                                    shift.is_holiday ? (
+                                                        <div style={{ color: "red", fontWeight: "bold" }}>休み希望</div>
+                                                    ) : (
+                                                        <>
+                                                            <span>{formatTime(shift.start_time)}</span>
+                                                            <span>{formatTime(shift.end_time)}</span>
+                                                        </>
+                                                    )
                                                 ) : (
                                                     <>
-                                                        <span>{formatTime(shift.start_time)}</span>
-                                                        <span>{formatTime(shift.end_time)}</span>
+                                                        <span>–</span>
+                                                        <span>–</span>
                                                     </>
-                                                )
-                                            ) : (
-                                                <>
-                                                    <span>–</span>
-                                                    <span>–</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                    );
-                                })}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                                )}
+                                            </div>
+                                        </td>
+                                        );
+                                    })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            <a
-                href="./dashboard"
-                style={{
-                    position: "fixed",
-                    top: "20px",
-                    right: "20px",
-                    background: "#0070f3",
-                    color: "white",
-                    padding: "12px 18px",
-                    borderRadius: "8px",
-                    textDecoration: "none",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                    fontWeight: "bold",
-                    zIndex: 9999,
-                }}
-            >
-                ダッシュボードへ戻る
-            </a>
-        </div>
+                <a
+                    href="./dashboard"
+                    style={{
+                        position: "fixed",
+                        top: "20px",
+                        right: "20px",
+                        background: "#0070f3",
+                        color: "white",
+                        padding: "12px 18px",
+                        borderRadius: "8px",
+                        textDecoration: "none",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                        fontWeight: "bold",
+                        zIndex: 9999,
+                    }}
+                >
+                    ダッシュボードへ戻る
+                </a>
+            </div>
+        </>
     );
 }
