@@ -8,7 +8,6 @@ type Member = {
   id: string;
   user_id: string;
   name: string;
-  discord_id: string | null;
 };
 
 export default function AdminDashboard({ user, initialMembers, initialLinks }: any) {
@@ -21,8 +20,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     return members.filter((m) => {
       return (
         m.id.toLowerCase().includes(q) ||
-        m.name.toLowerCase().includes(q) ||
-        (m.discord_id ?? "").toLowerCase().includes(q)
+        m.name.toLowerCase().includes(q)
       );
     });
   }, [search, members]);
@@ -32,14 +30,12 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   const [addUserId, setAddUserId] = useState("");
   const [addPassword, setAddPassword] = useState("");
   const [addName, setAddName] = useState("");
-  const [addDiscord, setAddDiscord] = useState("");
   
   //編集モーダル
   const [editing, setEditing] = useState<Member | null>(null);
   const [editUserId, setEditUserId] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [editName, setEditName] = useState("");
-  const [editDiscord, setEditDiscord] = useState("");
 
   async function refreshDashboard() {
     log("🔄 ダッシュボード最新データ取得");
@@ -59,13 +55,11 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   function openAddModal() {
     setAdding(true);
     setAddName("");
-    setAddDiscord("");
   }
 
   function closeAddModal() {
     setAdding(false);
     setAddName("");
-    setAddDiscord("");
   }
 
   async function addMember() {
@@ -74,7 +68,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: addName,
-        discord_id: addDiscord,
         userId: addUserId,
         password: addPassword,
       }),
@@ -99,7 +92,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
     setAddUserId("");
     setAddPassword("");
     setAddName("");
-    setAddDiscord("");
   }
   
   // ---------------------------------------------------------
@@ -128,7 +120,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
   function openEditModal(member: Member) {
     setEditing(member);
     setEditName(member.name);
-    setEditDiscord(member.discord_id ?? "");
     setEditUserId(member.user_id);
     setEditPassword("");
   }
@@ -144,7 +135,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
         id: editing.id,
         user_id: editUserId,
         password: editPassword || null,
-        discord_id: editDiscord,
       }),
     });
 
@@ -176,7 +166,7 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 
       <h2>検索</h2>
       <input
-        placeholder="UID / 名前 / Discord ID で検索"
+        placeholder="UID / 名前 で検索"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ width: "300px", marginBottom: "20px" }}
@@ -191,7 +181,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <strong>{m.name}</strong>
               <div>UUID: {m.id}</div>
               <div>ユーザーID: {m.user_id}</div>
-              <div>Discord: {m.discord_id ?? "未登録"}</div>
               <div style={{ marginTop: 5 }}>
                 <button onClick={() => openEditModal(m)}>編集</button>
                 <button onClick={() => deleteMember(m.id)} style={{ marginLeft: 10, color: "red" }}>削除</button>
@@ -246,18 +235,8 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               placeholder="パスワード"
               style={{ width: "100%", marginBottom: 10 }}
             />
-
-            <input
-              value={addDiscord}
-              onChange={(e) => setAddDiscord(e.target.value)}
-              placeholder="Discord ID（任意）"
-              style={{ width: "100%", marginBottom: 10 }}
-            />
-
             <button onClick={addMember}>追加</button>
-            <button onClick={closeAddModal} style={{ marginLeft: 10 }}>
-              キャンセル
-            </button>
+            <button onClick={closeAddModal} style={{ marginLeft: 10 }}>キャンセル</button>
           </div>
         </div>
       )}
@@ -307,14 +286,6 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               placeholder="パスワード"
               style={{ width: "100%", marginBottom: 10 }}
             />
-
-            <input
-              value={editDiscord}
-              onChange={(e) => setEditDiscord(e.target.value)}
-              placeholder="Discord ID"
-              style={{ width: "100%", marginBottom: 10 }}
-            />
-
             <button onClick={saveEdit}>保存</button>
             <button onClick={() => setEditing(null)} style={{ marginLeft: 10 }}>
               閉じる
@@ -362,7 +333,7 @@ export const getServerSideProps = async (ctx: any) => {
   log("[SSR] supabase profiles START");
   const { data: profiles, error: profilesError } = await supabaseApi
     .from("profiles")
-    .select("id, name, user_id, password_hash, discord_id")
+    .select("id, name, user_id, password_hash")
     .order("created_at");
   log("[SSR] supabase profiles END:", { profilesError, profilesLength: profiles?.length });
 
@@ -370,7 +341,6 @@ export const getServerSideProps = async (ctx: any) => {
     id: m.id,
     user_id: m.user_id,
     name: m.name,
-    discord_id: m.discord_id
   }));
 
   log("[SSR] getServerSideProps END");
