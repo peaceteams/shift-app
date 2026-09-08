@@ -28,10 +28,12 @@ function trimSeconds(time: string) {
 
 // API通知
 async function notifyShiftUpdated() {
-    await fetch("/api/shift/notify", {
+    await fetch("/api/notify/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "shift_updated" }),
+        body: JSON.stringify({
+            target: "admin",
+        }),
     });
 }
 
