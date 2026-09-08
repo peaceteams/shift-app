@@ -437,34 +437,41 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
 // 🔐 SSR: メンバー一覧 + シフト提出状況 + ワンタイムリンク
 // ---------------------------------------------------------
 export const getServerSideProps = async (ctx: any) => {
+  console.log("--------------------------------------------------");
+  console.log("[SSR] getServerSideProps START:", __filename);
+
+  // ① SSR が読み込んでいるモジュール一覧
   console.log(
     "[SSR] loaded modules:",
     Object.keys(require.cache).filter((m) =>
       m.includes("api/shift") || m.includes("stream") || m.includes("notify")
     )
   );
-  log("[SSR] getServerSideProps START:", __filename);
-  log("[SSR] URL:", ctx.req.url);
-  log("[SSR] cookies:", ctx.req.cookies);
 
+  // ② URL と Cookie のログ
+  console.log("[SSR] URL:", ctx.req.url);
+  console.log("[SSR] cookies:", ctx.req.cookies);
+
+  // ③ requireAdmin の開始・終了ログ
+  console.log("[SSR] requireAdmin START");
   const auth = await requireAdmin(ctx);
+  console.log("[SSR] requireAdmin END:", auth);
 
-  log("[SSR] requireAdmin result:", auth);
-
+  // ④ 認証失敗時のログ
   if (!auth.ok) {
-    log("[SSR] ❌ requireAdmin failed → redirect:", auth.redirect);
+    console.log("[SSR] ❌ requireAdmin failed → redirect:", auth.redirect);
     return { redirect: auth.redirect };
   }
 
-  log("[SSR] requireAdmin OK → fetching profiles");
+  console.log("[SSR] requireAdmin OK → fetching profiles");
 
+  // ⑤ profiles 取得の開始・終了ログ
+  console.log("[SSR] supabase profiles START");
   const { data: profiles, error: profilesError } = await supabaseApi
     .from("profiles")
     .select("id, name, user_id, password_hash, discord_id")
     .order("created_at");
-
-  log("[SSR] profiles:", profiles);
-  log("[SSR] profilesError:", profilesError);
+  console.log("[SSR] supabase profiles END:", { profilesError, profilesLength: profiles?.length });
 
   const members = (profiles ?? []).map((m: any) => ({
     id: m.id,
@@ -473,21 +480,20 @@ export const getServerSideProps = async (ctx: any) => {
     discord_id: m.discord_id
   }));
 
-  log("[SSR] fetching shift_links");
-
+  // ⑥ shift_links 取得の開始・終了ログ
+  console.log("[SSR] supabase links START");
   const { data: links, error: linksError } = await supabaseApi
     .from("shift_links")
     .select("user_id, token");
-
-  log("[SSR] links:", links);
-  log("[SSR] linksError:", linksError);
+  console.log("[SSR] supabase links END:", { linksError, linksLength: links?.length });
 
   const linkMap: Record<string, string> = {};
   for (const row of links ?? []) {
     linkMap[row.user_id] = `${process.env.NEXT_PUBLIC_APP_URL}/shift/${row.token}`;
   }
 
-  log("[SSR] getServerSideProps END");
+  console.log("[SSR] getServerSideProps END");
+  console.log("--------------------------------------------------");
 
   return {
     props: {
