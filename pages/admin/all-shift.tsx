@@ -72,35 +72,34 @@ export default function AllShiftPage() {
         async function run() {
             await load();
             adjustScale();
-        };
+        }
 
         const es = new EventSource("/api/sse/admin");
 
-        es.onmessage = (event) => {
+        es.onmessage = async (event) => {
             log("[SSE] admin received:", event.data);
 
             let data;
             try {
-            data = JSON.parse(event.data);
+                data = JSON.parse(event.data);
             } catch {
-            log("[SSE] JSON parse error");
-            return;
+                log("[SSE] JSON parse error");
+                return;
             }
 
-            if (data.type = "shift_updated") {
+            // ★ 比較は === にする
+            if (data.type === "shift_updated") {
                 log("[SSE] shift_updated → load()");
                 setIsUpdating(true);
-                run();
+
+                // ★ onmessage を async にしたので await が使える
+                await run();
+
                 setIsUpdating(false);
             }
         };
 
-        es.onerror = (err) => {
-            log("[SSE] error:", err);
-        };
-
         return () => {
-            log("[SSE] closing connection");
             es.close();
         };
     }, []);
