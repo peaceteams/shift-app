@@ -98,8 +98,17 @@ export default function AdminDashboard({ initialMembers }: any) {
   // 👤 メンバー削除
   // ---------------------------------------------------------
   async function deleteMember(id: string) {
-    if (!confirm("本当に削除しますか？")) return;
+    // ① 削除前チェック
+    const check = await fetch(`/api/members/check-can-delete?id=${id}`);
+    const { hasShift } = await check.json();
 
+    // ② シフト提出済みなら警告
+    if (hasShift) {
+      const ok = confirm("このユーザーはシフトを提出しています。本当に削除しますか？");
+      if (!ok) return;
+    }
+
+    // ③ 削除API実行
     const res = await fetch("/api/members/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -111,7 +120,7 @@ export default function AdminDashboard({ initialMembers }: any) {
       return;
     }
 
-    await notifyShiftUpdated()
+    alert("削除しました");
   }
 
   // ---------------------------------------------------------
