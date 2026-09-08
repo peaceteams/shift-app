@@ -7,6 +7,10 @@ import { log } from "@/utils/logger";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   log("▶ API /members/add START");
 
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   // -----------------------------
   // ① Cookie 認証（admin_session）
   // -----------------------------
@@ -44,27 +48,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // -----------------------------
   // ④ メンバー追加処理
   // -----------------------------
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const { name, discord_id, userId, password } = req.body;
+  const { name, userId, password } = req.body;
 
   if (!name || !userId || !password) {
     return res.status(400).json({ error: "name, userId, password は必須です" });
   }
 
-  // パスワードをハッシュ化
   const passwordHash = await bcrypt.hash(password, 10);
 
   // -----------------------------
-  // ⑤ profiles に直接挿入
+  // ⑤ profiles に挿入
   // -----------------------------
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from("profiles")
     .insert({
       name,
-      discord_id: discord_id || null,
       user_id: userId.toString(),
       password_hash: passwordHash,
     })
@@ -76,6 +74,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: insertError.message });
   }
 
+  // -----------------------------
+  // ⑥ 完了レスポンス
+  // -----------------------------
   return res.status(200).json({
     ok: true,
     member: inserted,
