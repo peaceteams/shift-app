@@ -75,7 +75,7 @@ export default function AllShiftPage() {
         }
 
         // 通知の種類で分岐
-        if (data.target === "admin") {
+        if (data.type = "shift_updated") {
             log("[SSE] shift_updated → load()");
             run();
         }
