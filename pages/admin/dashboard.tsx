@@ -192,6 +192,10 @@ export default function AdminDashboard({ user, initialMembers, initialLinks }: a
               <div>UUID: {m.id}</div>
               <div>ユーザーID: {m.user_id}</div>
               <div>Discord: {m.discord_id ?? "未登録"}</div>
+              <div style={{ marginTop: 5 }}>
+                <button onClick={() => openEditModal(m)}>編集</button>
+                <button onClick={() => deleteMember(m.id)} style={{ marginLeft: 10, color: "red" }}>削除</button>
+              </div>
             </li>
           ))}
         </ul>
