@@ -86,7 +86,7 @@ export default function AllShiftPage() {
     }, []);
 
     async function load() {
-        const res = await fetch("/api/admin/list", {
+        const res = await fetch("@/pages/api/admin/list", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
