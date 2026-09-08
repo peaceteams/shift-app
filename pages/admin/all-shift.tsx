@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GetServerSidePropsContext } from "next";
 import { requireAdmin } from "@/lib/auth/page/adminAuth";
+import { log } from "@/utils/logger";
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
     const auth = await requireAdmin(ctx);
@@ -55,32 +56,37 @@ export default function AllShiftPage() {
 
     // 管理者用 SSE 受信処理
     useEffect(() => {
+    async function run() {
+        await load();
+        adjustScale();
+    };
+
     const es = new EventSource("/api/sse/admin");
 
     es.onmessage = (event) => {
-        console.log("[SSE] admin received:", event.data);
+        log("[SSE] admin received:", event.data);
 
         let data;
         try {
         data = JSON.parse(event.data);
         } catch {
-        console.log("[SSE] JSON parse error");
+        log("[SSE] JSON parse error");
         return;
         }
 
         // 通知の種類で分岐
         if (data.target === "admin") {
-        console.log("[SSE] shift_updated → load()");
-        load(); // ← 既存の画面更新処理を呼ぶ
+            log("[SSE] shift_updated → load()");
+            run();
         }
     };
 
     es.onerror = (err) => {
-        console.log("[SSE] error:", err);
+        log("[SSE] error:", err);
     };
 
     return () => {
-        console.log("[SSE] closing connection");
+        log("[SSE] closing connection");
         es.close();
     };
     }, []);
