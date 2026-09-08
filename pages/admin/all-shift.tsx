@@ -45,50 +45,54 @@ export default function AllShiftPage() {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
+    // 画面サイズ変更時に自動で縮小し直す
+    useEffect(() => {
+        const handleResize = () => {
+            adjustScale();
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        };
+    }, []);
+
+    // 管理者用 SSE 受信処理
     useEffect(() => {
         async function run() {
             await load();
             adjustScale();
-        }
+        };
 
-        run();
-    }, [startDate, endDate]);
+        const es = new EventSource("/api/sse/admin");
 
-    // 管理者用 SSE 受信処理
-    useEffect(() => {
-    async function run() {
-        await load();
-        adjustScale();
-    };
+        es.onmessage = (event) => {
+            log("[SSE] admin received:", event.data);
 
-    const es = new EventSource("/api/sse/admin");
+            let data;
+            try {
+            data = JSON.parse(event.data);
+            } catch {
+            log("[SSE] JSON parse error");
+            return;
+            }
 
-    es.onmessage = (event) => {
-        log("[SSE] admin received:", event.data);
+            // 通知の種類で分岐
+            if (data.type = "shift_updated") {
+                log("[SSE] shift_updated → load()");
+                run();
+            }
+        };
 
-        let data;
-        try {
-        data = JSON.parse(event.data);
-        } catch {
-        log("[SSE] JSON parse error");
-        return;
-        }
+        es.onerror = (err) => {
+            log("[SSE] error:", err);
+        };
 
-        // 通知の種類で分岐
-        if (data.type = "shift_updated") {
-            log("[SSE] shift_updated → load()");
-            run();
-        }
-    };
-
-    es.onerror = (err) => {
-        log("[SSE] error:", err);
-    };
-
-    return () => {
-        log("[SSE] closing connection");
-        es.close();
-    };
+        return () => {
+            log("[SSE] closing connection");
+            es.close();
+        };
     }, []);
 
     async function load() {
