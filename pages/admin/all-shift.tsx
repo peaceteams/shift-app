@@ -55,7 +55,7 @@ export default function AllShiftPage() {
 
     // 管理者用 SSE 受信処理
     useEffect(() => {
-    const es = new EventSource("api/sse/admin");
+    const es = new EventSource("@/pages/api/sse/admin");
 
     es.onmessage = (event) => {
         console.log("[SSE] admin received:", event.data);
@@ -86,7 +86,7 @@ export default function AllShiftPage() {
     }, []);
 
     async function load() {
-        const res = await fetch("@/pages/api/admin/list", {
+        const res = await fetch("/api/admin/list", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
