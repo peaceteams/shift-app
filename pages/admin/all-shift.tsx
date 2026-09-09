@@ -69,14 +69,22 @@ export default function AllShiftPage() {
 
     // 管理者用 SSE 受信処理
     useEffect(() => {
+        let es: EventSource | null = null;
+
         async function run() {
             await load();
             adjustScale();
         }
 
-        const es = new EventSource("/api/sse/admin");
+        const connect = () => {
+            log("[SSE] connecting...");
+            es = new EventSource("/api/sse/admin");
 
-        es.onmessage = async (event) => {
+            es.onopen = () => {
+            log("[SSE] connected");
+            };
+
+            es.onmessage = async (event) => {
             log("[SSE] admin received:", event.data);
 
             let data;
@@ -87,20 +95,33 @@ export default function AllShiftPage() {
                 return;
             }
 
-            // ★ 比較は === にする
             if (data.type === "shift_updated") {
                 log("[SSE] shift_updated → load()");
                 setIsUpdating(true);
-
-                // ★ onmessage を async にしたので await が使える
                 await run();
-
                 setIsUpdating(false);
             }
+            };
+
+            es.onerror = () => {
+            log("[SSE] error → reconnecting in 2s...");
+            es?.close();
+
+            // ★ 切断中に変更があっても、再接続後に最新状態を取得する
+            setTimeout(async () => {
+                connect();
+                setIsUpdating(true);
+                await run();   // ★ 再接続後に必ず最新状態をロード
+                setIsUpdating(false);
+            }, 2000);
+            };
         };
 
+        connect();
+
         return () => {
-            es.close();
+            log("[SSE] cleanup → closing");
+            es?.close();
         };
     }, []);
 

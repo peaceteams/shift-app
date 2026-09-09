@@ -160,7 +160,7 @@ export default function AdminDashboard({ initialMembers }: any) {
       <h1>管理者ダッシュボード</h1>
 
       <section style={{ marginTop: 40 }}>
-        <button onClick={() => router.push("./all-shift")}>シフト一覧</button>
+        <button onClick={() => router.push("./all-shift")}>シフト確認</button>
         <button onClick={openAddModal} style={{ marginLeft: 10 }}>メンバー追加</button>
       </section>
 
