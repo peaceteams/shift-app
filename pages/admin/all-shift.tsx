@@ -48,8 +48,8 @@ export default function AllShiftPage() {
 
     useEffect(() => {
         async function run() {
-            await load();
             adjustScale();
+            await load();
         }
         run();
     }, [startDate, endDate]);
@@ -70,11 +70,6 @@ export default function AllShiftPage() {
     // 管理者用 SSE 受信処理
     useEffect(() => {
         let es: EventSource | null = null;
-
-        async function run() {
-            await load();
-            adjustScale();
-        }
 
         const connect = () => {
             log("[SSE] connecting...");
@@ -98,7 +93,7 @@ export default function AllShiftPage() {
             if (data.type === "shift_updated") {
                 log("[SSE] shift_updated → load()");
                 setIsUpdating(true);
-                await run();
+                await load();
                 setIsUpdating(false);
             }
             };
@@ -111,7 +106,7 @@ export default function AllShiftPage() {
             setTimeout(async () => {
                 connect();
                 setIsUpdating(true);
-                await run();   // ★ 再接続後に必ず最新状態をロード
+                await load();   // ★ 再接続後に必ず最新状態をロード
                 setIsUpdating(false);
             }, 2000);
             };
