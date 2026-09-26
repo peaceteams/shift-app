@@ -1,8 +1,15 @@
 // /pages/api/members/update.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import bcrypt from "bcryptjs";
+import { log } from "@/utils/logger";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  log("▶ API /members/update START");
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -11,6 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // ① Cookie 認証（admin_session）
   // -----------------------------
   const token = req.cookies["admin_session"];
+
   if (!token) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -42,27 +50,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // -----------------------------
-  // ④ 更新処理（profiles）
+  // ④ 更新データ取得
   // -----------------------------
-  const { id, name, discord_id } = req.body;
+  const { id, name, userId, password } = req.body;
 
   if (!id) {
-    return res.status(400).json({ error: "Missing id" });
+    return res.status(400).json({ error: "id は必須です" });
   }
 
-  const { data, error } = await supabaseAdmin
+  // -----------------------------
+  // ⑤ 更新項目作成
+  // -----------------------------
+  const updateData: any = {};
+
+  if (name !== undefined) {
+    updateData.name = name;
+  }
+
+  if (userId !== undefined) {
+    updateData.user_id = userId.toString();
+  }
+
+  if (password) {
+    updateData.password_hash = await bcrypt.hash(password, 10);
+  }
+
+  // -----------------------------
+  // ⑥ profiles 更新
+  // -----------------------------
+  const { data: updated, error: updateError } = await supabaseAdmin
     .from("profiles")
-    .update({
-      name,
-      discord_id: discord_id || null,
-    })
+    .update(updateData)
     .eq("id", id)
     .select()
     .single();
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
+  if (updateError) {
+    console.error("profiles update error:", updateError);
+
+    return res.status(500).json({
+      error: updateError.message,
+    });
   }
 
-  return res.status(200).json({ success: true, member: data });
+  // -----------------------------
+  // ⑦ 完了レスポンス
+  // -----------------------------
+  return res.status(200).json({
+    ok: true,
+    member: updated,
+    rawPassword: password ?? null,
+  });
 }
