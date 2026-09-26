@@ -142,7 +142,7 @@ export default function AdminDashboard({ initialMembers }: any) {
       body: JSON.stringify({
         name: editName,
         id: editing.id,
-        user_id: editUserId,
+        userId: editUserId,
         password: editPassword || null,
       }),
     });
